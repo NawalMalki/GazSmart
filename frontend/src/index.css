@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap");
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Light mode defaults for body */
+body {
+  @apply bg-white text-gray-900;
+}
+
+/* Dark mode styles for body - AVEC GRADIENT BLEU PREMIUM */
+html.dark body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  @apply text-gray-100;
+}
+
+/* IMPORTANT: Forcer le background sur les conteneurs principaux */
+.app-container {
+  @apply bg-transparent;
+}
+
+html.dark .app-container {
+  background: transparent !important;
+}
+
+/* Light mode background for auth pages (always light) */
+.auth-background {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 25%, #f0f4f8 50%, #f8f9fa 75%, #ffffff 100%);
+  position: relative;
+}
+
+.auth-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 15% 40%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 85% 70%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 10%, rgba(34, 197, 94, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Dark mode scrollbar styles */
+html.dark ::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animation-slideIn {
+  animation: slideIn 0.4s ease-out;
+}
+
+.animation-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animation-fadeInScale {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+input:focus {
+  transition: all 0.3s ease;
+}
+
+.heading-premium {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Smooth transitions for dark mode */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Exception pour le body qui a une transition plus lente */
+body {
+  transition-duration: 500ms;
+}
+
+/* Éviter les transitions sur les transformations et autres propriétés */
+*:not(body) {
+  transition-property: background-color, border-color, color, fill, stroke, opacity;
+}
