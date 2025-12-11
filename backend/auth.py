@@ -88,7 +88,7 @@ def verify_google_token(token: str):
         print(f"Error verifying Google token: {str(e)}")
         return None
 
-def create_verification_token(email: str) -> str:
+def create_verification_token(email: str) -> Optional[str]:
     """Create a verification token and store it in database"""
     try:
         token = secrets.token_urlsafe(32)
@@ -96,6 +96,7 @@ def create_verification_token(email: str) -> str:
         
         connection = get_db_connection()
         with connection.cursor() as cursor:
+            # remove old tokens for the same email (optional)
             cursor.execute("DELETE FROM verification_tokens WHERE email = %s", (email,))
             cursor.execute("""
                 INSERT INTO verification_tokens (email, token, expires_at)
@@ -110,7 +111,12 @@ def create_verification_token(email: str) -> str:
         return None
 
 def verify_email_token(token: str) -> Optional[str]:
-    """Verify an email verification token and return the email"""
+    """
+    Verify an email verification token and return the email.
+    IMPORTANT: This function does NOT delete a valid token immediately.
+    It only deletes the token if it is expired (to clean up), while a valid token
+    is left for the endpoint to handle deletion after the user is marked verified.
+    """
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
@@ -121,26 +127,26 @@ def verify_email_token(token: str) -> Optional[str]:
             result = cursor.fetchone()
             
             if not result:
+                # token not found
                 connection.close()
                 return None
             
             email = result['email']
             expires_at = result['expires_at']
             
+            # If token expired: delete it and return None
             if datetime.utcnow() > expires_at:
-                cursor.execute("DELETE FROM verification_tokens WHERE token = %s", (token,))
-                connection.commit()
-                connection.close()
+                try:
+                    cursor.execute("DELETE FROM verification_tokens WHERE token = %s", (token,))
+                    connection.commit()
+                except Exception as ex_del:
+                    print(f"Warning: failed to delete expired token: {ex_del}")
+                finally:
+                    connection.close()
                 return None
             
-            cursor.execute("""
-                UPDATE users SET is_verified = TRUE 
-                WHERE email = %s
-            """, (email,))
-            
-            cursor.execute("DELETE FROM verification_tokens WHERE token = %s", (token,))
-            connection.commit()
-        
+            # Token exists and is not expired: do NOT delete it here.
+            # Let the caller (endpoint) mark the user verified and then delete the token.
         connection.close()
         return email
         

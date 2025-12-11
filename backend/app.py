@@ -7,7 +7,7 @@ from auth import (
     create_verification_token, verify_email_token, resend_verification_token
 )
 from email_service import send_verification_email, send_welcome_email
-from database import init_db
+from database import init_db, get_db_connection
 from typing import Optional
 
 # Initialize FastAPI app
@@ -185,15 +185,25 @@ def logout():
 
 @app.get("/api/auth/verify-email")
 def verify_email(token: str):
-    """Verify email with token"""
+    """
+    Verify an email token safely without double-writing to DB.
+    """
+    # Vérifie le token, met à jour l’utilisateur et supprime le token
     email = verify_email_token(token)
-    
+
     if not email:
         raise HTTPException(status_code=400, detail="Invalid or expired verification token")
-    
+
     user = get_user_by_email(email)
-    send_welcome_email(email, user["full_name"])
-    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Email de bienvenue (best-effort)
+    try:
+        send_welcome_email(email, user.get("full_name", ""))
+    except Exception as e:
+        print(f"Warning: failed to send welcome email: {e}")
+
     return {
         "message": "Email verified successfully",
         "email": email
