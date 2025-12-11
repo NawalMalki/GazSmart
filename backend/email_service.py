@@ -10,7 +10,7 @@ def send_verification_email(email: str, token: str, full_name: str) -> bool:
         
         message = MIMEMultipart("alternative")
         message["Subject"] = "Vérifiez votre adresse email - Challenge Sobriété"
-        message["From"] = f"Les Gaz'Vengers <{SMTP_EMAIL}>"
+        message["From"] = f"GazSmart <{SMTP_EMAIL}>"
         message["To"] = email
 
         html = f"""
@@ -87,7 +87,7 @@ def send_verification_email(email: str, token: str, full_name: str) -> bool:
             <div class="container">
                 <div class="content">
                     <div class="header">
-                        <div class="logo">🌱 Les Gaz'Vengers</div>
+                        <div class="logo">GazSmart</div>
                     </div>
                     
                     <h1>Bonjour {full_name} ! 👋</h1>
