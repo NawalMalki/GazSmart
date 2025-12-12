@@ -16,7 +16,7 @@ const StatsCard = ({ title, value, percentage, icon, trend }) => {
           <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1 sm:mt-2">{value}</p>
           <div className={`flex items-center mt-1 sm:mt-2 ${trend === "up" ? "text-green-600" : "text-red-600"}`}>
             <span className="text-xs sm:text-sm font-medium">{percentage}</span>
-            <span className="text-xs ml-1">from last month</span>
+            <span className="text-xs ml-1">depuis le mois dernier</span>
           </div>
         </div>
         <div className="p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg flex-shrink-0">{icons[icon]}</div>

@@ -29,7 +29,7 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
     "/cuisine-maligne": "Cuisine Maligne",
     "/economie-eclair": "Économie Éclair",
     "/classement": "Classement",
-    "/actualites": "Fil d'actualité",
+    "/feed": "Fil d'actualité",
     "/evenements": "Événements",
     "/recompenses": "Récompenses",
     "/profile": "Profil",

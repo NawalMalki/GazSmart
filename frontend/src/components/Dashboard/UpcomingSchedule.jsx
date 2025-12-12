@@ -1,28 +1,28 @@
 const UpcomingSchedule = () => {
   const events = [
     {
-      date: "Wed, 11 Jan",
-      time: "09:20 AM",
-      title: "Business Analytics Press",
-      description: "Exploring the Future of Data-Driven +6 more",
+      date: 'Mer, 22 Nov',
+      time: '18:30',
+      title: 'Lancement Défi Éco-Quartier',
+      description: 'Début du challenge mensuel : -15% de gaz pour gagner des bons d’achat +25 foyers'
     },
     {
-      date: "Fri, 15 Feb",
-      time: "10:35 AM",
-      title: "Business Sprint",
-      description: "Techniques from Business Sprint +2 more",
+      date: 'Ven, 24 Nov',
+      time: '12:00',
+      title: 'Atelier Dashboard Personnalisé',
+      description: 'Apprendre à lire vos données de consommation en direct +18 inscrits'
     },
     {
-      date: "Thu, 18 Mar",
-      time: "01:15 AM",
-      title: "Customer Review Meeting",
-      description: "Insights from the Customer Review Meeting +8 more",
-    },
-  ]
+      date: 'Mar, 28 Nov',
+      time: '20:00',
+      title: 'Soirée Classement & Récompenses',
+      description: 'Annonce des gagnants du défi et remise des prix écoresponsables'
+    }
+  ];
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 h-full transition-colors duration-300">
-      <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-4">Upcoming Schedule</h3>
+      <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-4"> Programme à venir</h3>
 
       <div className="space-y-2 sm:space-y-4">
         {events.map((event, index) => (

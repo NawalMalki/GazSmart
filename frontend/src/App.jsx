@@ -16,6 +16,7 @@ import ChronoDouche from "./pages/ChronoDouche"
 import VerifyEmail from "./pages/VerifyEmail"
 
 import { ProtectedRoute } from "./components/ProtectedRoute"
+import FeedPage from "./pages/FeedPage" 
 
 import "./index.css"
 
@@ -106,6 +107,17 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route path="/feed" 
+      element={
+         <ProtectedRoute>
+            <DashboardLayout>
+              <FeedPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+      } 
+      /> 
+
     </Routes>
   )
 }

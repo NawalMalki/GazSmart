@@ -7,6 +7,7 @@ import {
   FiDroplet,
   FiClock,
   FiAlertTriangle,
+  FiMessageSquare,
   FiTrendingDown,
   FiBarChart2,
 } from "react-icons/fi"
@@ -39,7 +40,7 @@ const Sidebar = ({ isOpen }) => {
       title: "COMMUNAUTÉ",
       items: [
         { icon: <FiUsers />, label: "Classement", path: "/classement" },
-        { icon: <FiUsers />, label: "Fil d'actualité", path: "/actualites" },
+        { icon: <FiMessageSquare />, label: "Fil d'actualité", path: "/feed" },
         { icon: <FiCalendar />, label: "Événements", path: "/evenements" },
         { icon: <FiAward />, label: "Récompenses", path: "/recompenses" },
       ],
