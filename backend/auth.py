@@ -1,22 +1,42 @@
-import jwt
-import bcrypt
-from datetime import datetime, timedelta
-from typing import Optional
-from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from database import get_db_connection
-import secrets
+'''
+TOUTE LA LOGIQUE D'AUTHENTIFICATION
+- signup
+- login
+- Création et vérification des tokens jwt 
+- hash & verify password 
+C'est le fichier qu'il faut vérifier si un utilisateur ne peut pas se connecter 
+'''
 
+
+'''
+****************************** IMPORTS & DEPENDENCES *******************************************
+'''
+import jwt # Sécurité 
+import bcrypt # Hash des mots de passe 
+from datetime import datetime, timedelta # Gestion du temps
+from typing import Optional
+from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES # Les variables critiques de JWT 
+from database import get_db_connection # Ouvrir une connexion à la bdd 
+import secrets # Géneration de tokens sur 
+
+'''
+************************************* PASSWORD HASHING *******************************************
+'''
+# On ne stocke jamais un mot de passe en clair 
 def hash_password(password: str) -> str:
-    """Hash a password using bcrypt"""
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
+# Compare le password entré par l'utilisateur vs celui hashé en DB
 def verify_password(password: str, password_hash: str) -> bool:
-    """Verify a password against its hash"""
     return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
 
+'''
+************************************* JWT (TOKEN ACCESS) *****************************************
+Cet utilisateur est connecté ET autorisé
+'''
+# Créer un token
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT access token"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -26,8 +46,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+# Vérifier le token 
 def verify_token(token: str) -> Optional[str]:
-    """Verify a JWT token and return the email"""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -37,8 +57,12 @@ def verify_token(token: str) -> Optional[str]:
     except jwt.InvalidTokenError:
         return None
 
+'''
+************************************* USERS (DATABASE) ******************************************
+'''
+
+# Récupérer un utilisateur depuis la base de données par mail
 def get_user_by_email(email: str):
-    """Get user from database by email"""
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
@@ -50,8 +74,11 @@ def get_user_by_email(email: str):
         print(f"Error getting user: {str(e)}")
         return None
 
+'''
+****************************************** GOOGLE TOKEN ******************************************
+'''
+# Récupérer l'utilisateur par ID Google 
 def get_user_by_google_id(google_id: str):
-    """Get user from database by Google ID"""
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
@@ -60,7 +87,7 @@ def get_user_by_google_id(google_id: str):
         connection.close()
         return user
     except Exception as e:
-        print(f"Error getting user by Google ID: {str(e)}")
+        print(f"Erreur de récupération d'utilisateur par Google ID: {str(e)}")
         return None
 
 def create_user(email: str, full_name: str, password_hash: str = None, google_id: str = None, profile_picture: str = None, is_verified: bool = False):
@@ -88,8 +115,11 @@ def verify_google_token(token: str):
         print(f"Error verifying Google token: {str(e)}")
         return None
 
+'''
+******************************** EMAIL VERIFICATION TOKENS *****************************************
+'''
+# => Confirmer que l'email appartient à user 
 def create_verification_token(email: str) -> Optional[str]:
-    """Create a verification token and store it in database"""
     try:
         token = secrets.token_urlsafe(32)
         expires_at = datetime.utcnow() + timedelta(hours=24)
@@ -111,12 +141,7 @@ def create_verification_token(email: str) -> Optional[str]:
         return None
 
 def verify_email_token(token: str) -> Optional[str]:
-    """
-    Verify an email verification token and return the email.
-    IMPORTANT: This function does NOT delete a valid token immediately.
-    It only deletes the token if it is expired (to clean up), while a valid token
-    is left for the endpoint to handle deletion after the user is marked verified.
-    """
+
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
@@ -126,34 +151,34 @@ def verify_email_token(token: str) -> Optional[str]:
             """, (token,))
             result = cursor.fetchone()
             
-            if not result:
-                # token not found
+            if result:
+                # Token exists, check expiration
+                email = result['email']
+                expires_at = result['expires_at']
+                
+                # If token expired: delete it and return None
+                if datetime.utcnow() > expires_at:
+                    try:
+                        cursor.execute("DELETE FROM verification_tokens WHERE token = %s", (token,))
+                        connection.commit()
+                    except Exception as ex_del:
+                        print(f"Warning: failed to delete expired token: {ex_del}")
+                    finally:
+                        connection.close()
+                    return None
+                
+                # Token exists and is not expired
                 connection.close()
-                return None
+                return email
             
-            email = result['email']
-            expires_at = result['expires_at']
+            connection.close()
+            return None
             
-            # If token expired: delete it and return None
-            if datetime.utcnow() > expires_at:
-                try:
-                    cursor.execute("DELETE FROM verification_tokens WHERE token = %s", (token,))
-                    connection.commit()
-                except Exception as ex_del:
-                    print(f"Warning: failed to delete expired token: {ex_del}")
-                finally:
-                    connection.close()
-                return None
-            
-            # Token exists and is not expired: do NOT delete it here.
-            # Let the caller (endpoint) mark the user verified and then delete the token.
-        connection.close()
-        return email
-        
     except Exception as e:
         print(f"Error verifying email token: {str(e)}")
         return None
 
+# La possibilité de renvoyer un email de vérification
 def resend_verification_token(email: str) -> Optional[str]:
     """Resend verification token for a user"""
     try:

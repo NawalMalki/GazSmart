@@ -32,18 +32,7 @@ const ProfileDropdown = ({ isOpen, onClose, user = { name: "Admin" } }) => {
 
   return (
     <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 transition-colors duration-300">
-      {/* En-tête du profil */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-            <FiUser className="text-white text-sm" />
-          </div>
-          <div>
-            <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Administrateur</p>
-          </div>
-        </div>
-      </div>
+      
 
       {/* Menu items */}
       <div className="p-2">

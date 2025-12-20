@@ -1,3 +1,4 @@
+import { useTheme } from "../context/ThemeContext"
 import {
   FiHome,
   FiPieChart,
@@ -14,15 +15,15 @@ import {
 import logo from "../assets/logoo.jpeg"
 import { Link, useLocation } from "react-router-dom" 
 
-
 const Sidebar = ({ isOpen }) => {
   const location = useLocation(); 
+  const { theme } = useTheme() 
 
   const menuItems = [
     {
-      title: "DASHBOARD",
+      title: "ACCUEIL",
       items: [
-        { icon: <FiHome />, label: "Tableau de bord", path: "/" }, 
+        { icon: <FiHome />, label: "Tableau de bord", path: "/dashboard" }, 
         { icon: <FiPieChart />, label: "Analyses détaillées", path: "/analyses" },
         { icon: <FiAlertTriangle />, label: "Alertes & Recommandations", path: "/alertes" },
       ],
@@ -49,11 +50,13 @@ const Sidebar = ({ isOpen }) => {
 
   return (
     <div
-      className={`bg-white dark:bg-gray-900 shadow-lg h-screen overflow-y-auto transition-all duration-300 flex-shrink-0
-      ${isOpen ? "w-64" : "w-20"}`}
+      className={`transition-all duration-300 flex-shrink-0 shadow-lg h-screen overflow-y-auto
+        ${isOpen ? "w-64" : "w-20"}
+        ${theme === 'dark' ? 'bg-gray-900 text-gray-200' : 'bg-white text-gray-900'}`}
     >
-      {/* Header logo seulement */}
-      <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 border-b border-gray-200 dark:border-gray-700">
+      {/* Header logo */}
+      <div className={`sticky top-0 z-10 border-b transition-colors duration-300
+        ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className={`p-4 flex ${isOpen ? "justify-start" : "justify-center"}`}>
           <div className="flex items-center space-x-3">
             <img
@@ -64,7 +67,9 @@ const Sidebar = ({ isOpen }) => {
             {isOpen && (
               <div className="min-w-0">
                 <h1 className="text-xl font-bold text-green-600 truncate">GazSmart</h1>
-                <p className="text-xs text-gray-500 truncate">Sobriété énergétique</p>
+                <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-xs truncate`}>
+                  Sobriété énergétique
+                </p>
               </div>
             )}
           </div>
@@ -77,7 +82,8 @@ const Sidebar = ({ isOpen }) => {
           <div key={index} className="mb-6">
             {/* Section title */}
             {isOpen && (
-              <h3 className="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 truncate">
+              <h3 className={`px-4 text-xs font-semibold uppercase tracking-wider mb-3 truncate
+                ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 {section.title}
               </h3>
             )}
@@ -89,10 +95,9 @@ const Sidebar = ({ isOpen }) => {
                     to={item.path || "#"} 
                     className={`flex items-center px-4 py-3 text-sm font-medium 
                       transition-colors duration-200 rounded-lg mx-1 whitespace-nowrap
-                      ${
-                        location.pathname === item.path 
-                          ? "text-green-600 bg-green-50 dark:bg-green-900/20 border-r-2 border-green-600"
-                          : "text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      ${location.pathname === item.path
+                        ? `${theme === 'dark' ? 'text-green-400 bg-green-900/20 border-r-2 border-green-400' : 'text-green-600 bg-green-50 border-r-2 border-green-600'}`
+                        : `${theme === 'dark' ? 'text-gray-400 hover:text-green-400 hover:bg-gray-800' : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'}`
                       }
                       ${isOpen ? "justify-start" : "justify-center"}`}
                     title={!isOpen ? item.label : undefined}

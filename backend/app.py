@@ -1,22 +1,32 @@
+''' Cerveau de l'application
+C'est le point d'entrée de FastAPI où on crée l'application/api , on déclare les routes principales 
+et connecte les autres fichiers 
+'''
+
+
+
+'''
+************************************ IMPORTS & DEPENDANCES ******************************************
+'''
 from fastapi import FastAPI, HTTPException, Depends, Header
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware # Pour autoriser le frontend 
 from models import SignupRequest, LoginRequest, GoogleAuthRequest, UserResponse, AuthResponse
 from auth import (
     hash_password, verify_password, create_access_token, verify_token,
     get_user_by_email, get_user_by_google_id, create_user, verify_google_token,
     create_verification_token, verify_email_token, resend_verification_token
-)
+) # logique métier 
 from email_service import send_verification_email, send_welcome_email
-from database import init_db, get_db_connection
+from database import init_db, get_db_connection # Création et Connexion à la bdd 
 from typing import Optional
 
-# Initialize FastAPI app
+# Créer le serveur FastAPI 
 app = FastAPI(title="Auth API", version="1.0.0")
 
-# Initialize database
+# Initialiser la base de données 
 init_db()
 
-# CORS middleware
+# PERMETTRE au frontend d'appeler l'API
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,7 +39,7 @@ app.add_middleware(
 def get_current_user(authorization: Optional[str] = Header(None)):
     """Dependency to get current user from JWT token"""
     if not authorization:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Utilisateur non connecté")
     
     try:
         scheme, token = authorization.split()
@@ -48,16 +58,21 @@ def get_current_user(authorization: Optional[str] = Header(None)):
     
     return user
 
+
+
+# Définition des endpoints principaux 
 @app.get("/")
 def root():
-    return {"message": "Auth API is running"}
+    return {"message": "L'API est en cours d'exécution"}
 
+
+# Inscription + hash mot de passe + email verification
 @app.post("/api/auth/signup", response_model=AuthResponse)
 def signup(request: SignupRequest):
     """Register a new user"""
     existing_user = get_user_by_email(request.email)
     if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Email déjà associé à un compte")
     
     password_hash = hash_password(request.password)
     
@@ -94,19 +109,19 @@ def signup(request: SignupRequest):
     
     return AuthResponse(access_token=access_token, token_type="bearer", user=user_response)
 
+# Connexion classique en mail et mot de passe avec JWT 
 @app.post("/api/auth/login", response_model=AuthResponse)
 def login(request: LoginRequest):
-    """Login a user with email and password"""
     user = get_user_by_email(request.email)
     
     if not user or not user.get("password_hash"):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Email ou mot de passe invalide")
     
     if not user.get("is_verified"):
-        raise HTTPException(status_code=403, detail="Email not verified. Please check your inbox.")
+        raise HTTPException(status_code=403, detail="Email non vérifié, veuillez vérifier votre boîte de réception.")
     
     if not verify_password(request.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Email ou mot de passe invalide")
     
     access_token = create_access_token(data={"sub": user["email"]})
     
@@ -121,9 +136,9 @@ def login(request: LoginRequest):
     
     return AuthResponse(access_token=access_token, token_type="bearer", user=user_response)
 
+# Connexion via Google OAuth 
 @app.post("/api/auth/google", response_model=AuthResponse)
 def google_auth(request: GoogleAuthRequest):
-    """Authenticate with Google OAuth token"""
     token_data = verify_google_token(request.token)
     
     if not token_data:
@@ -135,7 +150,7 @@ def google_auth(request: GoogleAuthRequest):
     profile_picture = token_data.get("picture")
     
     if not email:
-        raise HTTPException(status_code=400, detail="Email not provided by Google")
+        raise HTTPException(status_code=400, detail="L'email n'a pas été fourni par Google")
     
     user = get_user_by_google_id(google_id)
     
@@ -143,6 +158,7 @@ def google_auth(request: GoogleAuthRequest):
         user = get_user_by_email(email)
     
     if not user:
+        # Créer un nouvel utilisateur
         user = create_user(
             email=email,
             full_name=full_name,
@@ -150,9 +166,27 @@ def google_auth(request: GoogleAuthRequest):
             profile_picture=profile_picture,
             is_verified=True
         )
+    else:
+        # *** AJOUT : Mettre à jour la photo de profil si elle a changé ***
+        if user.get("profile_picture") != profile_picture:
+            try:
+                connection = get_db_connection()
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE users 
+                        SET profile_picture = %s, full_name = %s
+                        WHERE id = %s
+                    """, (profile_picture, full_name, user["id"]))
+                    connection.commit()
+                connection.close()
+                
+                # Recharger l'utilisateur mis à jour
+                user = get_user_by_google_id(google_id)
+            except Exception as e:
+                print(f"Error updating Google profile picture: {str(e)}")
     
     if not user:
-        raise HTTPException(status_code=500, detail="Failed to process Google authentication")
+        raise HTTPException(status_code=500, detail="Échec de l'authentification Google")
     
     access_token = create_access_token(data={"sub": user["email"]})
     
@@ -167,9 +201,10 @@ def google_auth(request: GoogleAuthRequest):
     
     return AuthResponse(access_token=access_token, token_type="bearer", user=user_response)
 
+    
+# Récupérer l'utilisateur connecté 
 @app.get("/api/auth/me", response_model=UserResponse)
 def get_me(user: dict = Depends(get_current_user)):
-    """Get current authenticated user"""
     return UserResponse(
         id=user["id"],
         email=user["email"],
@@ -181,23 +216,48 @@ def get_me(user: dict = Depends(get_current_user)):
 
 @app.post("/api/auth/logout")
 def logout():
-    """Logout user (token handled on frontend)"""
-    return {"message": "Logged out successfully"}
+    return {"message": "Déconnexion réussie"}
+
+
+# Vérifier le token email
 
 @app.get("/api/auth/verify-email")
 def verify_email(token: str):
-    """
-    Verify an email token safely without double-writing to DB.
-    """
-    # Vérifie le token, met à jour l’utilisateur et supprime le token
+    # Vérifie le token
     email = verify_email_token(token)
 
     if not email:
-        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+        raise HTTPException(status_code=400, detail="Jeton de vérification invalide ou expiré")
 
     user = get_user_by_email(email)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+    # *** SI DÉJÀ VÉRIFIÉ, RETOURNER SUCCESS SANS ERREUR ***
+    if user.get("is_verified"):
+        return {
+            "message": "Email déjà vérifié",
+            "email": email
+        }
+
+    # Mettre à jour is_verified dans la base de données
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE users 
+                SET is_verified = TRUE 
+                WHERE email = %s
+            """, (email,))
+            connection.commit()
+            
+            # Supprimer le token après vérification réussie
+            cursor.execute("DELETE FROM verification_tokens WHERE token = %s", (token,))
+            connection.commit()
+        connection.close()
+    except Exception as e:
+        print(f"Error updating user verification status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la vérification")
 
     # Email de bienvenue (best-effort)
     try:
@@ -206,13 +266,13 @@ def verify_email(token: str):
         print(f"Warning: failed to send welcome email: {e}")
 
     return {
-        "message": "Email verified successfully",
+        "message": "Email vérifié avec succès",
         "email": email
     }
 
+# Renvoyer le mail de vérification
 @app.post("/api/auth/resend-verification")
 def resend_verification(request: LoginRequest):
-    """Resend verification email"""
     user = get_user_by_email(request.email)
     
     if not user:

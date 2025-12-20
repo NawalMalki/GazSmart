@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useNavigate, Link } from "react-router-dom"
 import { Alert } from "../components/Alert"
 import logo from "../assets/logoo.jpeg"
@@ -8,17 +8,24 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 function VerifyEmail() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [status, setStatus] = useState("verifying") // verifying, success, error
+  const [status, setStatus] = useState("verifying")
   const [message, setMessage] = useState("")
   const token = searchParams.get("token")
+  const hasVerified = useRef(false)
 
   useEffect(() => {
+    // Si déjà vérifié, ne rien faire
+    if (hasVerified.current) return
+
     const verifyEmail = async () => {
       if (!token) {
         setStatus("error")
         setMessage("Token de vérification manquant")
         return
       }
+
+      // Marquer comme "en cours" IMMÉDIATEMENT avant l'appel API
+      hasVerified.current = true
 
       try {
         const response = await fetch(`${API_URL}/api/auth/verify-email?token=${token}`)

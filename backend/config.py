@@ -1,14 +1,19 @@
+'''
+Lire les variables du fichier .env et les exposer correctement au code 
+'''
+
+
+# IMPORTS & CHARGEMENT DU .ENV 
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
 
-# JWT Settings
+# Paramètres de JWT 
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
-# Database Settings
+# Paramètres de base de données 
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "mamakima2001@")
@@ -19,7 +24,7 @@ DB_PORT = int(os.getenv("DB_PORT", "3307"))
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
-# Email Settings
+# Paramètres d'email 
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_EMAIL = os.getenv("SMTP_EMAIL", "")

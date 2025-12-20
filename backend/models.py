@@ -1,7 +1,14 @@
+'''
+Définition de la structure de la base de données 
+'''
+
+
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 
+
+# Les requests 
 class SignupRequest(BaseModel):
     email: EmailStr
     password: str
@@ -14,6 +21,8 @@ class LoginRequest(BaseModel):
 class GoogleAuthRequest(BaseModel):
     token: str
 
+
+# Les responses 
 class UserResponse(BaseModel):
     id: int
     email: str

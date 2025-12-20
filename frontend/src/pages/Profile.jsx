@@ -1,29 +1,78 @@
 "use client"
 
-import { useState } from "react"
-import { FiArrowLeft, FiEdit2, FiMail, FiPhone, FiMapPin, FiCalendar, FiAward, FiTarget } from "react-icons/fi"
+import { useState, useEffect } from "react"
+import { FiEdit2, FiMail, FiCalendar, FiAward, FiTarget, FiLoader } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
+import { useTheme } from "../context/ThemeContext"
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const Profile = () => {
   const navigate = useNavigate()
+  const { theme } = useTheme() 
   const [isEditing, setIsEditing] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [profileData, setProfileData] = useState({
-    fullName: "Admin User",
-    email: "admin@gazsmart.com",
-    phone: "+33 6 12 34 56 78",
-    address: "Paris, France",
-    joinDate: "2024-01-15",
-    avatar: "A",
+    fullName: "",
+    email: "",
+    joinDate: "",
+    avatar: "",
+    profilePicture: null,
   })
 
   const [editData, setEditData] = useState(profileData)
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem("authToken")
+        
+        if (!token) {
+          navigate("/login")
+          return
+        }
+
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const userData = await response.json()
+          const avatarLetter = userData.full_name?.charAt(0).toUpperCase() || "U"
+          
+          setProfileData({
+            fullName: userData.full_name || "",
+            email: userData.email || "",
+            joinDate: userData.created_at || new Date().toISOString(),
+            avatar: avatarLetter,
+            profilePicture: userData.profile_picture || null,
+          })
+          setLoading(false)
+        } else if (response.status === 401) {
+          localStorage.removeItem("authToken")
+          navigate("/login")
+        } else {
+          setError("Erreur lors du chargement du profil")
+          setLoading(false)
+        }
+      } catch (err) {
+        setError("Erreur de connexion au serveur")
+        setLoading(false)
+      }
+    }
+
+    fetchUserProfile()
+  }, [navigate])
 
   const handleEdit = () => {
     setIsEditing(true)
     setEditData(profileData)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setProfileData(editData)
     setIsEditing(false)
   }
@@ -39,37 +88,76 @@ const Profile = () => {
     }))
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 h-[75px]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <FiArrowLeft className="text-gray-600 dark:text-gray-400 text-xl" />
-            </button>
-            <h1 className="text-2xl sm:text-2xl font-bold text-gray-600 dark:text-white">Mon Profil</h1>
-          </div>
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-colors ${
+        theme === "dark" ? "bg-gray-950" : "bg-gray-50"
+      }`}>
+        <div className="text-center">
+          <FiLoader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+            Chargement du profil...
+          </p>
         </div>
       </div>
+    )
+  }
 
-      {/* Main Content */}
+  if (error) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-colors ${
+        theme === "dark" ? "bg-gray-950" : "bg-gray-50"
+      }`}>
+        <div className="text-center">
+          <div className={`px-6 py-4 rounded-lg ${
+            theme === "dark" ? "bg-red-900/30 text-red-400" : "bg-red-100 text-red-600"
+          }`}>
+            {error}
+          </div>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Retour au tableau de bord
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`min-h-screen transition-colors duration-300 ${
+      theme === "dark" ? "bg-gray-950" : "bg-gray-50"
+    }`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Avatar & Quick Info */}
-          <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          
+          {/* LEFT PANEL */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Profile Card */}
+            <div className={`rounded-lg shadow-sm border p-6 transition-colors ${
+              theme === "dark" ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"
+            }`}>
               <div className="flex flex-col items-center">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center mb-4">
-                  <span className="text-4xl font-bold text-white">{profileData.avatar}</span>
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-center">
+                {profileData.profilePicture ? (
+                  <img
+                    src={profileData.profilePicture}
+                    alt={profileData.fullName}
+                    className="w-24 h-24 rounded-full mb-4 object-cover"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center mb-4">
+                    <span className="text-4xl font-bold text-white">{profileData.avatar}</span>
+                  </div>
+                )}
+                <h2 className={`text-xl font-semibold text-center ${
+                  theme === "dark" ? "text-white" : "text-gray-900"
+                }`}>
                   {profileData.fullName}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Administrateur</p>
+                <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-500"} mt-1`}>
+                  Utilisateur
+                </p>
 
                 {!isEditing && (
                   <button
@@ -84,47 +172,58 @@ const Profile = () => {
             </div>
 
             {/* Stats */}
-            <div className="mt-6 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Statistiques</h3>
+            <div className={`rounded-lg shadow-sm border p-6 transition-colors ${
+              theme === "dark" ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"
+            }`}>
+              <h3 className={`font-semibold mb-4 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                Statistiques
+              </h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <FiAward className="text-blue-600 dark:text-blue-400" />
+                  <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-blue-900/30" : "bg-blue-100"}`}>
+                    <FiAward className={`${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Défis complétés</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">12</p>
+                    <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-600"} text-sm`}>Défis complétés</p>
+                    <p className={`${theme === "dark" ? "text-white" : "text-gray-900"} font-semibold`}>0</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <FiTarget className="text-green-600 dark:text-green-400" />
+                  <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-green-900/30" : "bg-green-100"}`}>
+                    <FiTarget className={`${theme === "dark" ? "text-green-400" : "text-green-600"}`} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Économies réalisées</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">€247.50</p>
+                    <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-600"} text-sm`}>Économies réalisées</p>
+                    <p className={`${theme === "dark" ? "text-white" : "text-gray-900"} font-semibold`}>€0.00</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Profile Information */}
-          <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          {/* RIGHT PANEL */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Personal Info */}
+            <div className={`rounded-lg shadow-sm border p-6 transition-colors ${
+              theme === "dark" ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"
+            }`}>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Informations personnelles</h3>
+                <h3 className={`text-lg font-semibold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  Informations personnelles
+                </h3>
                 {isEditing && (
                   <div className="flex gap-3">
                     <button
                       onClick={handleCancel}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
+                      className={`px-4 py-2 rounded-lg border transition-colors font-medium ${
+                        theme === "dark" ? "border-gray-600 text-gray-300 hover:bg-gray-800" : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }`}
                     >
                       Annuler
                     </button>
                     <button
                       onClick={handleSave}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
                     >
                       Enregistrer
                     </button>
@@ -133,101 +232,68 @@ const Profile = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Full Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom complet</label>
+                  <label className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                    Nom complet
+                  </label>
                   {isEditing ? (
                     <input
                       type="text"
                       value={editData.fullName}
                       onChange={(e) => handleInputChange("fullName", e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                      className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition-colors ${
+                        theme === "dark" ? "bg-gray-800 border-gray-600 text-white focus:ring-blue-500" : "bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
+                      }`}
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-white">{profileData.fullName}</p>
+                    <p className={`${theme === "dark" ? "text-white" : "text-gray-900"}`}>{profileData.fullName}</p>
                   )}
                 </div>
 
-                {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                  <label className={`block text-sm font-medium mb-2 flex items-center gap-2 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
                     <FiMail className="text-lg" />
                     Email
                   </label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      value={editData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    />
-                  ) : (
-                    <p className="text-gray-900 dark:text-white">{profileData.email}</p>
-                  )}
+                  <p className={`${theme === "dark" ? "text-white" : "text-gray-900"}`}>{profileData.email}</p>
+                  <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-500"} text-xs mt-1`}>
+                    L'email ne peut pas être modifié
+                  </p>
                 </div>
 
-                {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                    <FiPhone className="text-lg" />
-                    Téléphone
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      value={editData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    />
-                  ) : (
-                    <p className="text-gray-900 dark:text-white">{profileData.phone}</p>
-                  )}
-                </div>
-
-                {/* Address */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                    <FiMapPin className="text-lg" />
-                    Adresse
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editData.address}
-                      onChange={(e) => handleInputChange("address", e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    />
-                  ) : (
-                    <p className="text-gray-900 dark:text-white">{profileData.address}</p>
-                  )}
-                </div>
-
-                {/* Join Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                  <label className={`block text-sm font-medium mb-2 flex items-center gap-2 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
                     <FiCalendar className="text-lg" />
                     Date d'inscription
                   </label>
-                  <p className="text-gray-900 dark:text-white">
-                    {new Date(profileData.joinDate).toLocaleDateString("fr-FR")}
+                  <p className={`${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    {new Date(profileData.joinDate).toLocaleDateString("fr-FR", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric"
+                    })}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Account Settings */}
-            <div className="mt-6 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Sécurité</h3>
+            {/* Security */}
+            <div className={`rounded-lg shadow-sm border p-6 transition-colors ${
+              theme === "dark" ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"
+            }`}>
+              <h3 className={`text-lg font-semibold mb-4 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                Sécurité
+              </h3>
               <div className="space-y-3">
-                <button className="w-full px-4 py-3 text-left border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300 font-medium">
+                <button className={`w-full px-4 py-3 text-left rounded-lg border transition-colors font-medium ${
+                  theme === "dark" ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                }`}>
                   Modifier le mot de passe
-                </button>
-                <button className="w-full px-4 py-3 text-left border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300 font-medium">
-                  Authentification à deux facteurs
                 </button>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>

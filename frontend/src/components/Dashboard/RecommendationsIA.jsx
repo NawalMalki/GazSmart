@@ -1,4 +1,8 @@
+import { useTheme } from "../../context/ThemeContext"
+
 const RecommendationsIA = () => {
+  const { theme } = useTheme()
+
   const recommendations = [
     {
       title: "Baissez de 1°C",
@@ -15,8 +19,14 @@ const RecommendationsIA = () => {
   ]
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 h-full transition-colors duration-300">
-      <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-3 sm:mb-4">
+    <div
+      className={`rounded-lg shadow-sm border p-4 sm:p-6 h-full transition-colors duration-300
+        ${theme === 'dark'
+          ? 'bg-gray-800 border-gray-700 text-gray-100'
+          : 'bg-white border-gray-200 text-gray-900'
+        }`}
+    >
+      <h3 className={`text-base sm:text-lg font-semibold mb-3 sm:mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         Recommandations IA
       </h3>
 
@@ -24,10 +34,18 @@ const RecommendationsIA = () => {
         {recommendations.map((recommendation, index) => (
           <div
             key={index}
-            className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800"
+            className={`p-3 sm:p-4 rounded-lg border transition-colors duration-300
+              ${theme === 'dark'
+                ? 'bg-blue-900/20 border-blue-800'
+                : 'bg-blue-50 border-blue-100'
+              }`}
           >
-            <h4 className="font-semibold text-blue-800 dark:text-blue-400 text-sm mb-1">{recommendation.title}</h4>
-            <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-300">{recommendation.description}</p>
+            <h4 className={`font-semibold text-sm mb-1 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-800'}`}>
+              {recommendation.title}
+            </h4>
+            <p className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}>
+              {recommendation.description}
+            </p>
           </div>
         ))}
       </div>

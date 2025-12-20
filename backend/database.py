@@ -1,8 +1,13 @@
-import pymysql
-from config import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT
+'''
+Création et connexion à la base de données et gestion des sessions
+'''
 
+import pymysql # biblio python pour mySQL 
+from config import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT # Charger les paramètres de DB depuis config.py 
+
+
+# Connexion prête à l'emploi dans tout le code 
 def get_db_connection():
-    """Create a MySQL database connection"""
     connection = pymysql.connect(
         host=DB_HOST,
         user=DB_USER,
@@ -14,8 +19,8 @@ def get_db_connection():
     )
     return connection
 
+# Créer les bases de données et les tables dendans si elles n'existent pas + Initialiser certains données
 def init_db():
-    """Initialize database and create tables if they don't exist"""
     try:
         connection = pymysql.connect(
             host=DB_HOST,
@@ -25,14 +30,14 @@ def init_db():
             charset='utf8mb4'
         )
         with connection.cursor() as cursor:
-            # Create database if it doesn't exist
+            # Créer bdd 
             cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
         connection.close()
         
-        # Now connect to the database
+        # Se connecter via la connexion prête à l'emploi déjà créé au dessus 
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # Create users table
+            # Créer la table des utilisateurs 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -49,7 +54,7 @@ def init_db():
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             
-            # Create verification_tokens table
+            # Créer la table des tokens 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS verification_tokens (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -63,7 +68,7 @@ def init_db():
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             
-            # Update existing Google users to be verified
+            # Tous les utilisateurs connectés par Google sont considéré comme vérifiés 
             cursor.execute("""
                 UPDATE users 
                 SET is_verified = TRUE 
@@ -72,8 +77,9 @@ def init_db():
             
             connection.commit()
         connection.close()
-        print("Database initialized successfully")
-        print("Users table created/verified")
-        print("Verification_tokens table created/verified")
+        print("Base de données initialisée avec succès")
+        print("Table des utilisateurs créée / vérifiée")
+        print("Table des tokens de vérification créée / vérifiée")
+
     except Exception as e:
-        print(f" Database initialization error: {str(e)}")
+        print(f"Erreur lors de l'initialisation de la base de données : {str(e)}")

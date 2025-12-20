@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FiImage, FiBarChart2, FiAward, FiSend, FiX } from 'react-icons/fi';
 
-const CreatePost = ({ onCreatePost, editingPost, onCancelEdit }) => {
+const CreatePost = ({ onCreatePost, editingPost, onCancelEdit, theme = 'light' }) => {
   const [postContent, setPostContent] = useState('');
   const [showOptions, setShowOptions] = useState(false);
 
-  // Si on édite un post, pré-remplir le contenu
   useEffect(() => {
     if (editingPost) {
       setPostContent(editingPost.content);
@@ -25,13 +24,16 @@ const CreatePost = ({ onCreatePost, editingPost, onCancelEdit }) => {
   const handleCancel = () => {
     setPostContent('');
     setShowOptions(false);
-    if (onCancelEdit) {
-      onCancelEdit();
-    }
+    if (onCancelEdit) onCancelEdit();
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+    <div className={`rounded-xl shadow-sm border p-4 mb-6 transition-colors duration-300
+      ${theme === 'dark' 
+        ? 'bg-gray-800 border-gray-700 text-gray-200' 
+        : 'bg-white border-gray-200 text-gray-900'
+      }`}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <img 
@@ -43,17 +45,17 @@ const CreatePost = ({ onCreatePost, editingPost, onCancelEdit }) => {
             <h3 className="font-semibold">
               {editingPost ? "Modifier votre publication" : "Quoi de neuf ?"}
             </h3>
-            <p className="text-xs text-gray-500">
+            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
               {editingPost ? "Modifiez votre post ci-dessous" : "Partagez vos économies d'énergie"}
             </p>
           </div>
         </div>
         
-        {/* Bouton annuler pour l'édition */}
         {editingPost && (
           <button 
             onClick={handleCancel}
-            className="text-gray-500 hover:text-red-600 p-2 rounded-full hover:bg-gray-100"
+            className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors
+              ${theme === 'dark' ? 'text-gray-300 hover:text-red-500' : 'text-gray-500 hover:text-red-600'}`}
             title="Annuler"
           >
             <FiX size={20} />
@@ -65,7 +67,11 @@ const CreatePost = ({ onCreatePost, editingPost, onCancelEdit }) => {
         value={postContent}
         onChange={(e) => setPostContent(e.target.value)}
         placeholder="Partagez vos astuces d'économie de gaz, vos défis réussis, ou posez une question à la communauté..."
-        className="w-full border border-gray-300 rounded-lg p-3 mb-3 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+        className={`w-full border rounded-lg p-3 mb-3 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none
+          ${theme === 'dark' 
+            ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400 focus:border-green-400' 
+            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-green-500'
+          }`}
         rows="3"
       />
       
@@ -75,13 +81,22 @@ const CreatePost = ({ onCreatePost, editingPost, onCancelEdit }) => {
             <>
               <button 
                 onClick={() => setShowOptions(!showOptions)}
-                className="flex items-center space-x-2 text-gray-600 hover:text-green-600 px-3 py-2 rounded-lg hover:bg-gray-50"
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200
+                  ${theme === 'dark' 
+                    ? 'text-gray-300 hover:text-green-400 hover:bg-gray-700' 
+                    : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'
+                  }`}
               >
                 <FiImage size={18} />
                 <span className="text-sm">Ajouter</span>
               </button>
               
-              <button className="flex items-center space-x-2 text-gray-600 hover:text-green-600 px-3 py-2 rounded-lg hover:bg-gray-50">
+              <button className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200
+                ${theme === 'dark' 
+                  ? 'text-gray-300 hover:text-green-400 hover:bg-gray-700' 
+                  : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'
+                }`}
+              >
                 <FiBarChart2 size={18} />
                 <span className="text-sm">Statistiques</span>
               </button>
@@ -93,7 +108,8 @@ const CreatePost = ({ onCreatePost, editingPost, onCancelEdit }) => {
           {editingPost && (
             <button 
               onClick={handleCancel}
-              className="flex items-center space-x-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200
+                ${theme === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             >
               <span>Annuler</span>
             </button>
@@ -102,7 +118,11 @@ const CreatePost = ({ onCreatePost, editingPost, onCancelEdit }) => {
           <button 
             onClick={handleSubmit}
             disabled={!postContent.trim()}
-            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-white transition-colors duration-200
+              ${theme === 'dark' 
+                ? 'bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed' 
+                : 'bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed'
+              }`}
           >
             <FiSend size={18} />
             <span>{editingPost ? "Modifier" : "Publier"}</span>
@@ -110,14 +130,17 @@ const CreatePost = ({ onCreatePost, editingPost, onCancelEdit }) => {
         </div>
       </div>
       
-      {/* Options supplémentaires (uniquement pour création) */}
       {!editingPost && showOptions && (
-        <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center space-x-2 text-gray-600 hover:text-green-600 p-2 rounded-lg hover:bg-gray-50">
+        <div className={`mt-4 pt-4 border-t grid grid-cols-2 gap-2 transition-colors duration-300
+          ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}
+        >
+          <button className={`flex items-center justify-center space-x-2 p-2 rounded-lg transition-colors duration-200
+            ${theme === 'dark' ? 'text-gray-300 hover:text-green-400 hover:bg-gray-700' : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'}`}>
             <FiAward size={16} />
             <span className="text-sm">Défi réussi</span>
           </button>
-          <button className="flex items-center justify-center space-x-2 text-gray-600 hover:text-green-600 p-2 rounded-lg hover:bg-gray-50">
+          <button className={`flex items-center justify-center space-x-2 p-2 rounded-lg transition-colors duration-200
+            ${theme === 'dark' ? 'text-gray-300 hover:text-green-400 hover:bg-gray-700' : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'}`}>
             <FiBarChart2 size={16} />
             <span className="text-sm">Graphique conso</span>
           </button>

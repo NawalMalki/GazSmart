@@ -1,6 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap");
+
+
 @import "tailwindcss";
 
+@theme {
+
+  
+}
 
 html {
   color-scheme: light;
@@ -18,21 +24,22 @@ body {
 }
 
 /* Light mode defaults for body */
-body {
-  @apply bg-white text-gray-900;
-}
+@layer base {
+  body {
+    background-color: rgb(249 250 251); /* gray-50 */
+    color: rgb(17 24 39); /* gray-900 */
+  }
 
-/* Dark mode styles for body - AVEC GRADIENT BLEU PREMIUM */
-html.dark body {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
-  background-attachment: fixed;
-  min-height: 100vh;
-  @apply text-gray-100;
+
+  html.dark body {
+    background-color: rgb(3 7 18); /* gray-950 */
+    color: rgb(243 244 246); /* gray-100 */
+  }
 }
 
 /* IMPORTANT: Forcer le background sur les conteneurs principaux */
 .app-container {
-  @apply bg-transparent;
+  background-color: transparent;
 }
 
 html.dark .app-container {
