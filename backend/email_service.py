@@ -1,7 +1,15 @@
-import smtplib
-from email.mime.text import MIMEText
+'''
+UN SERVICE EXTERNE 
+- Gestion de la vérification par mail 
+- Gestion du mot de passe oublié 
+- Notifications par mail
+'''
+
+
+import smtplib # Connexion au service SMTP et envoie de mails 
+from email.mime.text import MIMEText  # Construire des emails multi-parts 
 from email.mime.multipart import MIMEMultipart
-from config import SMTP_SERVER, SMTP_PORT, SMTP_EMAIL, SMTP_PASSWORD, FRONTEND_URL
+from config import SMTP_SERVER, SMTP_PORT, SMTP_EMAIL, SMTP_PASSWORD, FRONTEND_URL # Récupérer les paramètres nécessaires pour le service SMTP
 
 def send_verification_email(email: str, token: str, full_name: str) -> bool:
     """Send verification email to user"""
@@ -209,7 +217,7 @@ def send_welcome_email(email: str, full_name: str) -> bool:
         <body>
             <div class="container">
                 <div class="content">
-                    <h1>🎉 Votre compte est activé !</h1>
+                    <h1>Votre compte est activé !</h1>
                     
                     <p>Félicitations {full_name} ! Votre email a été vérifié avec succès.</p>
                     

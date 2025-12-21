@@ -132,7 +132,7 @@ const ConsommationGaz = () => {
 
         <div className={`p-4 rounded-lg border transition-colors duration-300
           ${theme === 'dark' ? 'bg-purple-900/30 border-purple-700 text-purple-300' : 'bg-purple-50 border-purple-300 text-purple-700'}`}>
-          <p className="text-xs font-medium mb-1">Gaz Économisé</p>
+          <p className="text-xs font-medium mb-1">Gaz Produit</p>
           <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold`}>
             {totalGazEco.toFixed(1)} m³
           </p>

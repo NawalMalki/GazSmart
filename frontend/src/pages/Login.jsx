@@ -6,6 +6,9 @@ import { useAuth } from "../context/AuthContext"
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google"
 import { Alert } from "../components/Alert"
 import logo from "../assets/logoo.jpeg"
+import grdf_logo from "../assets/images/grdf_logo.png"
+import cegibat_logo from "../assets/images/ceg.jpg"
+
 
 function Login() {
   const [email, setEmail] = useState("")
@@ -79,6 +82,29 @@ function Login() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
+              
+              {/* Partner Logos */}
+              <div className="pt-8">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                  En partenariat avec
+                </p>
+                <div className="flex items-center gap-6">
+                  <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <img 
+                      src={grdf_logo || "/placeholder.svg"} 
+                      alt="GRDF" 
+                      className="h-6 w-auto object-contain grayscale hover:grayscale-0 transition"
+                    />
+                  </div>
+                  <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <img 
+                      src={cegibat_logo || "/placeholder.svg"} 
+                      alt="CEGIBAT" 
+                      className="h-6 w-auto object-contain grayscale hover:grayscale-0 transition"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Right Section - Login Form */}
@@ -131,12 +157,20 @@ function Login() {
 
                   {/* Password Field */}
                   <div>
-                    <label
-                      htmlFor="password"
-                      className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wider"
-                    >
-                      Mot de passe
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label
+                        htmlFor="password"
+                        className="block text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                      >
+                        Mot de passe
+                      </label>
+                      <Link 
+                        to="/forgot-password" 
+                        className="text-xs font-medium text-teal-600 hover:text-teal-700 transition"
+                      >
+                        Mot de passe oublié?
+                      </Link>
+                    </div>
                     <input
                       id="password"
                       type="password"

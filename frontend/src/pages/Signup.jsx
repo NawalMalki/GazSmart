@@ -6,6 +6,8 @@ import { useAuth } from "../context/AuthContext"
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google"
 import { Alert } from "../components/Alert"
 import logo from "../assets/logoo.jpeg"
+import grdf_logo from "../assets/images/grdf_logo.png"
+import cegibat_logo from "../assets/images/ceg.jpg"
 
 function Signup() {
   const [fullName, setFullName] = useState("")
@@ -131,6 +133,30 @@ function Signup() {
                   Conseils d'optimisation personnalisés
                 </li>
               </ul>
+
+               {/* Partner Logos */}
+                            <div className="pt-8">
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                                En partenariat avec
+                              </p>
+                              <div className="flex items-center gap-6">
+                                <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                                  <img 
+                                    src={grdf_logo || "/placeholder.svg"} 
+                                    alt="GRDF" 
+                                    className="h-6 w-auto object-contain grayscale hover:grayscale-0 transition"
+                                  />
+                                </div>
+                                <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                                  <img 
+                                    src={cegibat_logo || "/placeholder.svg"} 
+                                    alt="CEGIBAT" 
+                                    className="h-6 w-auto object-contain grayscale hover:grayscale-0 transition"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+              
             </div>
 
             {/* Right Section - Signup Form */}
