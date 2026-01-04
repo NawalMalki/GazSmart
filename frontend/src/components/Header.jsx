@@ -21,7 +21,6 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
     "/dashboard": "Tableau de bord",
     "/defis": "Défis disponibles",
     "/chrono-douche": "Chrono Douche",
-    "/analyses": "Analyses détaillées",
     "/alertes": "Alertes & Recommandations",
     "/defi-temperature": "Défi Température",
     "/cuisine-maligne": "Cuisine Maligne",

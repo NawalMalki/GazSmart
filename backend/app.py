@@ -14,7 +14,8 @@ from models import SignupRequest, LoginRequest, GoogleAuthRequest, UserResponse,
 from auth import (
     hash_password, verify_password, create_access_token, verify_token,
     get_user_by_email, get_user_by_google_id, create_user, verify_google_token,
-    create_verification_token, verify_email_token, resend_verification_token
+    create_verification_token, verify_email_token, resend_verification_token,
+    is_admin  # Pour vérifier si l'utilisateur est admin
 ) # logique métier 
 from email_service import send_verification_email, send_welcome_email
 from database import init_db, get_db_connection # Création et Connexion à la bdd 
@@ -58,6 +59,15 @@ def get_current_user(authorization: Optional[str] = Header(None)):
     
     return user
 
+def get_current_admin(user: dict = Depends(get_current_user)):
+    """Dependency pour vérifier que l'utilisateur est admin"""
+    if not is_admin(user):
+        raise HTTPException(
+            status_code=403, 
+            detail="Accès refusé : droits administrateur requis"
+        )
+    return user
+
 
 
 # Définition des endpoints principaux 
@@ -80,7 +90,8 @@ def signup(request: SignupRequest):
         email=request.email,
         full_name=request.full_name,
         password_hash=password_hash,
-        is_verified=False
+        is_verified=False,
+        role="user"  # Par défaut, les nouveaux comptes sont des utilisateurs normaux
     )
     
     if not user:
@@ -104,6 +115,7 @@ def signup(request: SignupRequest):
         full_name=user["full_name"],
         profile_picture=user.get("profile_picture"),
         google_id=user.get("google_id"),
+        role=user.get("role", "user"),  # Inclure le rôle dans la réponse
         created_at=user["created_at"]
     )
     
@@ -117,7 +129,8 @@ def login(request: LoginRequest):
     if not user or not user.get("password_hash"):
         raise HTTPException(status_code=401, detail="Email ou mot de passe invalide")
     
-    if not user.get("is_verified"):
+    # Les admins peuvent se connecter sans vérification d'email
+    if not user.get("is_verified") and not is_admin(user):
         raise HTTPException(status_code=403, detail="Email non vérifié, veuillez vérifier votre boîte de réception.")
     
     if not verify_password(request.password, user["password_hash"]):
@@ -131,6 +144,7 @@ def login(request: LoginRequest):
         full_name=user["full_name"],
         profile_picture=user.get("profile_picture"),
         google_id=user.get("google_id"),
+        role=user.get("role", "user"),  # IMPORTANT: Le frontend a besoin du rôle pour rediriger correctement
         created_at=user["created_at"]
     )
     
@@ -164,10 +178,11 @@ def google_auth(request: GoogleAuthRequest):
             full_name=full_name,
             google_id=google_id,
             profile_picture=profile_picture,
-            is_verified=True
+            is_verified=True,
+            role="user"  # Les utilisateurs Google sont par défaut des users normaux
         )
     else:
-        # *** AJOUT : Mettre à jour la photo de profil si elle a changé ***
+        # Mettre à jour la photo de profil si elle a changé
         if user.get("profile_picture") != profile_picture:
             try:
                 connection = get_db_connection()
@@ -196,6 +211,7 @@ def google_auth(request: GoogleAuthRequest):
         full_name=user["full_name"],
         profile_picture=user.get("profile_picture"),
         google_id=user.get("google_id"),
+        role=user.get("role", "user"),  # Inclure le rôle
         created_at=user["created_at"]
     )
     
@@ -211,6 +227,7 @@ def get_me(user: dict = Depends(get_current_user)):
         full_name=user["full_name"],
         profile_picture=user.get("profile_picture"),
         google_id=user.get("google_id"),
+        role=user.get("role", "user"),  # Inclure le rôle
         created_at=user["created_at"]
     )
 
@@ -219,8 +236,32 @@ def logout():
     return {"message": "Déconnexion réussie"}
 
 
-# Vérifier le token email
+# Vérifier si l'utilisateur connecté est admin
+@app.get("/api/auth/check-admin")
+def check_admin(user: dict = Depends(get_current_user)):
+    """Vérifie si l'utilisateur connecté est admin"""
+    return {
+        "is_admin": is_admin(user),
+        "role": user.get("role", "user")
+    }
 
+
+# EXEMPLE: Endpoint protégé accessible uniquement aux admins
+@app.get("/api/admin/users")
+def get_all_users(admin: dict = Depends(get_current_admin)):
+    """Liste tous les utilisateurs - accessible uniquement aux admins"""
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id, email, full_name, role, is_verified, created_at FROM users")
+            users = cursor.fetchall()
+        connection.close()
+        return {"users": users}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
+
+# Vérifier le token email
 @app.get("/api/auth/verify-email")
 def verify_email(token: str):
     # Vérifie le token
@@ -233,7 +274,7 @@ def verify_email(token: str):
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
-    # *** SI DÉJÀ VÉRIFIÉ, RETOURNER SUCCESS SANS ERREUR ***
+    # SI DÉJÀ VÉRIFIÉ, RETOURNER SUCCESS SANS ERREUR
     if user.get("is_verified"):
         return {
             "message": "Email déjà vérifié",

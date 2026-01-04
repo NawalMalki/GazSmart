@@ -66,18 +66,18 @@ export const AuthProvider = ({ children }) => {
       if (!response.ok) {
         setAuthError(data.detail || "Erreur lors de l'inscription")
         setLoading(false)
-        return false
+        return { success: false } 
       }
 
       // Ne pas sauvegarder le token ni l'utilisateur après signup
       // L'utilisateur doit vérifier son email d'abord
       setLoading(false)
-      return true
+      return { success: true, user: data.user } 
     } catch (error) {
       console.error("Erreur d'inscription:", error)
       setAuthError("Erreur de connexion au serveur")
       setLoading(false)
-      return false
+      return { success: false } 
     }
   }
 
@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }) => {
           setAuthError(data.detail || "Email ou mot de passe incorrect")
         }
         setLoading(false)
-        return false
+        return { success: false } 
       }
 
       // Sauvegarder le token et l'utilisateur
@@ -114,12 +114,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(data.user))
       setUser(data.user)
       setLoading(false)
-      return true
+      return { success: true, user: data.user } 
     } catch (error) {
       console.error("Erreur de connexion:", error)
       setAuthError("Erreur de connexion au serveur")
       setLoading(false)
-      return false
+      return { success: false } 
     }
   }
 
@@ -143,7 +143,7 @@ export const AuthProvider = ({ children }) => {
       if (!response.ok) {
         setAuthError(data.detail || "Erreur lors de l'authentification Google")
         setLoading(false)
-        return false
+        return { success: false } 
       }
 
       // Sauvegarder le token et l'utilisateur
@@ -151,12 +151,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(data.user))
       setUser(data.user)
       setLoading(false)
-      return true
+      return { success: true, user: data.user } 
     } catch (error) {
       console.error("Erreur d'authentification Google:", error)
       setAuthError("Erreur de connexion au serveur")
       setLoading(false)
-      return false
+      return { success: false } 
     }
   }
 

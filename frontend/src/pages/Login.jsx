@@ -33,9 +33,14 @@ function Login() {
       return
     }
 
-    const success = await login(email, password)
-    if (success) {
-      navigate("/dashboard")
+    const result = await login(email, password)
+    if (result.success) {
+      // Redirection selon le rôle
+      if (result.user?.role === "admin") {
+        navigate("/adminspace")
+      } else {
+        navigate("/dashboard")
+      }
     } else {
       setError(authError || "Identifiants incorrects. Veuillez réessayer.")
     }
@@ -43,9 +48,14 @@ function Login() {
 
   const handleGoogleLogin = async (credentialResponse) => {
     setError("")
-    const success = await loginWithGoogle(credentialResponse.credential)
-    if (success) {
-      navigate("/dashboard")
+    const result = await loginWithGoogle(credentialResponse.credential)
+    if (result.success) {
+      // Redirection selon le rôle
+      if (result.user?.role === "admin") {
+        navigate("/admin/dashboard")
+      } else {
+        navigate("/dashboard")
+      }
     } else {
       setError(authError || "Connexion Google échouée")
     }
@@ -76,12 +86,7 @@ function Login() {
                 consommation énergétique et réaliser des économies durables.
               </p>
 
-              <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition transform hover:scale-105">
-                <span>En savoir plus</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+             
               
               {/* Partner Logos */}
               <div className="pt-8">

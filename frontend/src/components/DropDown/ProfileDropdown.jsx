@@ -9,14 +9,24 @@ const ProfileDropdown = ({ isOpen, onClose, user = { name: "Admin" } }) => {
 
   if (!isOpen) return null
 
+  const isAdmin = user?.role === "admin"
+
   const menuItems = [
     {
       icon: FiUser,
       label: "Mon profil",
-      onClick: () => navigate("/profile"),
+      onClick: () => navigate(isAdmin ? "/adminspace/profile" : "/profile"),
     },
-    { icon: FiSettings, label: "Paramètres", onClick: () => console.log("Paramètres cliqué") },
-    { icon: FiHelpCircle, label: "Aide & Support", onClick: () => console.log("Aide cliqué") },
+    { 
+      icon: FiSettings, 
+      label: "Paramètres", 
+      onClick: () => navigate(isAdmin ? "/adminspace/settings" : "/settings")
+    },
+    { 
+      icon: FiHelpCircle, 
+      label: "Aide & Support", 
+      onClick: () => console.log("Aide cliqué") 
+    },
   ]
 
   const handleMenuItemClick = (onClick) => {
@@ -32,8 +42,6 @@ const ProfileDropdown = ({ isOpen, onClose, user = { name: "Admin" } }) => {
 
   return (
     <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 transition-colors duration-300">
-      
-
       {/* Menu items */}
       <div className="p-2">
         {menuItems.map((item, index) => {

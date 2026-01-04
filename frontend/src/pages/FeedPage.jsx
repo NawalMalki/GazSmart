@@ -20,7 +20,6 @@ const FeedPage = () => {
       userAvatar: "https://i.pravatar.cc/150?img=8",
       time: "Il y a 2 heures",
       content: "🎉 Défi relevé ! J'ai réduit ma consommation de chauffage de 18% ce mois-ci en réglant mon thermostat à 19°C la journée. Qui d'autre participe au défi température ?",
-      stats: { saving: 18, energySaved: 45 },
       likes: 24,
       comments: 8,
       shares: 3,
@@ -36,7 +35,7 @@ const FeedPage = () => {
       userAvatar: "https://i.pravatar.cc/150?img=10",
       time: "Il y a 5 heures",
       content: "📊 Résultats du mois : Notre quartier a économisé 1250 kWh de gaz ! Le bâtiment B est en tête avec -22% de consommation. Félicitations à tous !",
-      stats: { saving: 12, energySaved: 1250 },
+      
       likes: 42,
       comments: 15,
       shares: 7,

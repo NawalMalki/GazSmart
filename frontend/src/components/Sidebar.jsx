@@ -11,20 +11,26 @@ import {
   FiMessageSquare,
   FiTrendingDown,
   FiBarChart2,
+  FiSettings,
+  FiDatabase,
+  FiShield,
+  FiActivity,
+  FiFileText,
+  FiAlertCircle,
 } from "react-icons/fi"
 import logo from "../assets/logoo.jpeg"
 import { Link, useLocation } from "react-router-dom" 
 
-const Sidebar = ({ isOpen }) => {
+const Sidebar = ({ isOpen, isAdmin = false }) => {
   const location = useLocation(); 
   const { theme } = useTheme() 
 
-  const menuItems = [
+  // Menu pour utilisateurs normaux
+  const userMenuItems = [
     {
       title: "ACCUEIL",
       items: [
         { icon: <FiHome />, label: "Tableau de bord", path: "/dashboard" }, 
-        { icon: <FiPieChart />, label: "Analyses détaillées", path: "/analyses" },
         { icon: <FiAlertTriangle />, label: "Alertes & Recommandations", path: "/alertes" },
       ],
     },
@@ -48,6 +54,39 @@ const Sidebar = ({ isOpen }) => {
     },
   ]
 
+  // Menu pour admin
+  const adminMenuItems = [
+    {
+      title: "ACCUEIL",
+      items: [
+        { icon: <FiHome />, label: "Tableau de bord admin", path: "/adminspace" }, 
+        { icon: <FiAlertTriangle />, label: "Gestion des alertes", path: "/adminspace/alertes" },
+ 
+      ],}, 
+      {
+      title: "DÉFIS & JEUX",
+      items: [
+        { icon: <FiAward />, label: "Gestion des défis", path: '/adminspace/defis' },
+         { icon: <FiAward />, label: "Gestion des récompenses", path: "/adminspace/recompenses" },
+      ],
+    },
+    {
+      title: "COMMUNAUTÉ",
+      items: [
+        { icon: <FiMessageSquare />, label: "Contrôle des postes", path: "/adminspace/feed" },
+        { icon: <FiCalendar />, label: "Gestion des évenements", path: "/adminspace/evenements" },
+       
+      ],
+    
+    }
+  ]
+
+  // Choisir le menu selon le type d'utilisateur
+  const menuItems = isAdmin ? adminMenuItems : userMenuItems
+  
+  // Choisir la couleur du thème selon le type
+  const accentColor = isAdmin ? 'red' : 'green'
+
   return (
     <div
       className={`transition-all duration-300 flex-shrink-0 shadow-lg h-screen overflow-y-auto
@@ -66,9 +105,11 @@ const Sidebar = ({ isOpen }) => {
             />
             {isOpen && (
               <div className="min-w-0">
-                <h1 className="text-xl font-bold text-green-600 truncate">GazSmart</h1>
+                <h1 className={`text-xl font-bold truncate`}>
+                  GazSmart
+                </h1>
                 <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-xs truncate`}>
-                  Sobriété énergétique
+                  {isAdmin ? 'GazSmart - GRDF' : 'Sobriété énergétique'}
                 </p>
               </div>
             )}
@@ -96,8 +137,12 @@ const Sidebar = ({ isOpen }) => {
                     className={`flex items-center px-4 py-3 text-sm font-medium 
                       transition-colors duration-200 rounded-lg mx-1 whitespace-nowrap
                       ${location.pathname === item.path
-                        ? `${theme === 'dark' ? 'text-green-400 bg-green-900/20 border-r-2 border-green-400' : 'text-green-600 bg-green-50 border-r-2 border-green-600'}`
-                        : `${theme === 'dark' ? 'text-gray-400 hover:text-green-400 hover:bg-gray-800' : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'}`
+                        ? `${theme === 'dark' 
+                            ? `text-${accentColor}-400 bg-${accentColor}-900/20 border-r-2 border-${accentColor}-400` 
+                            : `text-${accentColor}-600 bg-${accentColor}-50 border-r-2 border-${accentColor}-600`}`
+                        : `${theme === 'dark' 
+                            ? `text-gray-400 hover:text-${accentColor}-400 hover:bg-gray-800` 
+                            : `text-gray-600 hover:text-${accentColor}-600 hover:bg-gray-50`}`
                       }
                       ${isOpen ? "justify-start" : "justify-center"}`}
                     title={!isOpen ? item.label : undefined}

@@ -47,12 +47,31 @@ def init_db():
                     google_id VARCHAR(255) UNIQUE,
                     profile_picture VARCHAR(500),
                     is_verified BOOLEAN DEFAULT FALSE,
+                    role VARCHAR(50) DEFAULT 'user',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     INDEX idx_email (email),
-                    INDEX idx_google_id (google_id)
+                    INDEX idx_google_id (google_id),
+                    INDEX idx_role (role)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
+            
+            # Si la table existe déjà sans la colonne role, on l'ajoute
+            cursor.execute("""
+                SELECT COUNT(*) as count 
+                FROM information_schema.COLUMNS 
+                WHERE TABLE_SCHEMA = %s 
+                AND TABLE_NAME = 'users' 
+                AND COLUMN_NAME = 'role'
+            """, (DB_NAME,))
+            
+            result = cursor.fetchone()
+            if result['count'] == 0:
+                cursor.execute("""
+                    ALTER TABLE users 
+                    ADD COLUMN role VARCHAR(50) DEFAULT 'user' AFTER is_verified
+                """)
+                cursor.execute("CREATE INDEX idx_role ON users(role)")
             
             # Créer la table des tokens 
             cursor.execute("""
@@ -74,6 +93,29 @@ def init_db():
                 SET is_verified = TRUE 
                 WHERE google_id IS NOT NULL
             """)
+            
+            # Créer le compte admin GRDF si il n'existe pas encore
+            cursor.execute("SELECT * FROM users WHERE email = 'admin_grdf@gmail.com'")
+            admin_exists = cursor.fetchone()
+            
+            if not admin_exists:
+                from auth import hash_password
+                admin_password_hash = hash_password("admin_grdf_2026")
+                
+                cursor.execute("""
+                    INSERT INTO users (email, full_name, password_hash, is_verified, role)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, ("admin_grdf@gmail.com", "Admin GRDF", admin_password_hash, True, "admin"))
+                
+                print("Compte admin GRDF créé avec succès")
+            else:
+                # S'assurer que le compte admin a bien le rôle admin
+                cursor.execute("""
+                    UPDATE users 
+                    SET role = 'admin', is_verified = TRUE 
+                    WHERE email = 'admin_grdf@gmail.com'
+                """)
+                print("Compte admin GRDF vérifié")
             
             connection.commit()
         connection.close()

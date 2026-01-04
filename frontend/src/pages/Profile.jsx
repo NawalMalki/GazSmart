@@ -1,15 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FiEdit2, FiMail, FiCalendar, FiAward, FiTarget, FiLoader } from "react-icons/fi"
+import { FiEdit2, FiMail, FiCalendar, FiAward, FiTarget, FiLoader, FiShield } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import { useTheme } from "../context/ThemeContext"
+import { useAuth } from "../context/AuthContext"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const Profile = () => {
   const navigate = useNavigate()
-  const { theme } = useTheme() 
+  const { theme } = useTheme()
+  const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -19,9 +21,13 @@ const Profile = () => {
     joinDate: "",
     avatar: "",
     profilePicture: null,
+    role: "user",
   })
 
   const [editData, setEditData] = useState(profileData)
+
+  // Déterminer si c'est un admin
+  const isAdmin = user?.role === "admin" || profileData.role === "admin"
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -49,6 +55,7 @@ const Profile = () => {
             joinDate: userData.created_at || new Date().toISOString(),
             avatar: avatarLetter,
             profilePicture: userData.profile_picture || null,
+            role: userData.role || "user",
           })
           setLoading(false)
         } else if (response.status === 401) {
@@ -115,7 +122,7 @@ const Profile = () => {
             {error}
           </div>
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate(isAdmin ? "/adminspace" : "/dashboard")}
             className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             Retour au tableau de bord
@@ -146,7 +153,11 @@ const Profile = () => {
                     className="w-24 h-24 rounded-full mb-4 object-cover"
                   />
                 ) : (
-                  <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center mb-4">
+                  <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 ${
+                    isAdmin 
+                      ? "bg-gradient-to-br from-red-500 to-orange-500" 
+                      : "bg-gradient-to-br from-blue-500 to-green-500"
+                  }`}>
                     <span className="text-4xl font-bold text-white">{profileData.avatar}</span>
                   </div>
                 )}
@@ -155,9 +166,17 @@ const Profile = () => {
                 }`}>
                   {profileData.fullName}
                 </h2>
-                <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-500"} mt-1`}>
-                  Utilisateur
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                    {isAdmin ? "Administrateur" : "Utilisateur"}
+                  </p>
+                  {isAdmin && (
+                    <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-semibold rounded-full flex items-center gap-1">
+                      <FiShield className="text-xs" />
+                      ADMIN
+                    </span>
+                  )}
+                </div>
 
                 {!isEditing && (
                   <button
@@ -171,34 +190,36 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Stats */}
-            <div className={`rounded-lg shadow-sm border p-6 transition-colors ${
-              theme === "dark" ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"
-            }`}>
-              <h3 className={`font-semibold mb-4 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-                Statistiques
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-blue-900/30" : "bg-blue-100"}`}>
-                    <FiAward className={`${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
+            {/* Stats - Seulement pour utilisateurs normaux */}
+            {!isAdmin && (
+              <div className={`rounded-lg shadow-sm border p-6 transition-colors ${
+                theme === "dark" ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"
+              }`}>
+                <h3 className={`font-semibold mb-4 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  Statistiques
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-blue-900/30" : "bg-blue-100"}`}>
+                      <FiAward className={`${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
+                    </div>
+                    <div>
+                      <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-600"} text-sm`}>Défis complétés</p>
+                      <p className={`${theme === "dark" ? "text-white" : "text-gray-900"} font-semibold`}>0</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-600"} text-sm`}>Défis complétés</p>
-                    <p className={`${theme === "dark" ? "text-white" : "text-gray-900"} font-semibold`}>0</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-green-900/30" : "bg-green-100"}`}>
-                    <FiTarget className={`${theme === "dark" ? "text-green-400" : "text-green-600"}`} />
-                  </div>
-                  <div>
-                    <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-600"} text-sm`}>Économies réalisées</p>
-                    <p className={`${theme === "dark" ? "text-white" : "text-gray-900"} font-semibold`}>€0.00</p>
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-green-900/30" : "bg-green-100"}`}>
+                      <FiTarget className={`${theme === "dark" ? "text-green-400" : "text-green-600"}`} />
+                    </div>
+                    <div>
+                      <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-600"} text-sm`}>Économies réalisées</p>
+                      <p className={`${theme === "dark" ? "text-white" : "text-gray-900"} font-semibold`}>€0.00</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* RIGHT PANEL */}
@@ -274,6 +295,19 @@ const Profile = () => {
                     })}
                   </p>
                 </div>
+
+                {isAdmin && (
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 flex items-center gap-2 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                      <FiShield className="text-lg" />
+                      Rôle
+                    </label>
+                    <p className={`${theme === "dark" ? "text-white" : "text-gray-900"}`}>Administrateur</p>
+                    <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-500"} text-xs mt-1`}>
+                      Accès complet à la plateforme d'administration
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

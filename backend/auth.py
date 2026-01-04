@@ -90,15 +90,15 @@ def get_user_by_google_id(google_id: str):
         print(f"Erreur de récupération d'utilisateur par Google ID: {str(e)}")
         return None
 
-def create_user(email: str, full_name: str, password_hash: str = None, google_id: str = None, profile_picture: str = None, is_verified: bool = False):
+def create_user(email: str, full_name: str, password_hash: str = None, google_id: str = None, profile_picture: str = None, is_verified: bool = False, role: str = "user"):
     """Create a new user in the database"""
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO users (email, full_name, password_hash, google_id, profile_picture, is_verified)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (email, full_name, password_hash, google_id, profile_picture, is_verified))
+                INSERT INTO users (email, full_name, password_hash, google_id, profile_picture, is_verified, role)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (email, full_name, password_hash, google_id, profile_picture, is_verified, role))
             connection.commit()
         connection.close()
         return get_user_by_email(email)
@@ -114,6 +114,22 @@ def verify_google_token(token: str):
     except Exception as e:
         print(f"Error verifying Google token: {str(e)}")
         return None
+
+'''
+************************************* ADMIN VERIFICATION ******************************************
+'''
+# Vérifier si l'utilisateur a le rôle admin
+def is_admin(user: dict) -> bool:
+    """Check if user has admin role"""
+    return user.get("role") == "admin"
+
+# Vérifier l'accès admin par email
+def check_admin_access(email: str) -> bool:
+    """Verify if user is admin"""
+    user = get_user_by_email(email)
+    if not user:
+        return False
+    return is_admin(user)
 
 '''
 ******************************** EMAIL VERIFICATION TOKENS *****************************************

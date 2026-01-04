@@ -29,6 +29,7 @@ class UserResponse(BaseModel):
     full_name: str
     profile_picture: Optional[str] = None
     google_id: Optional[str] = None
+    role: str = "user"  # Le rôle de l'utilisateur (user ou admin)
     created_at: datetime
 
 class AuthResponse(BaseModel):
