@@ -19,6 +19,8 @@ import { ProtectedRoute } from "./components/ProtectedRoute"
 import FeedPage from "./pages/FeedPage" 
 
 import "./index.css"
+import CuisineMaligne from "./pages/CuisineMaligne"
+import DefiTemperature from "./pages/DefiTemperature"
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -111,6 +113,31 @@ function App() {
           <ProtectedRoute>
             <DashboardLayout>
               <ChronoDouche />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+
+<Route
+        path="/cuisine-maligne"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <CuisineMaligne />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+
+
+<Route
+        path="/defi-temperature"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DefiTemperature />
             </DashboardLayout>
           </ProtectedRoute>
         }
