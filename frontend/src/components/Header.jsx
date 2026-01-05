@@ -27,7 +27,7 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
     "/economie-eclair": "Économie Éclair",
     "/classement": "Classement",
     "/feed": "Fil d'actualité",
-    "/evenements": "Événements",
+    "/events": "Événements",
     "/recompenses": "Récompenses",
     "/profile": "Profil",
   }

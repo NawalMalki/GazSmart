@@ -31,7 +31,7 @@ const Sidebar = ({ isOpen, isAdmin = false }) => {
       title: "ACCUEIL",
       items: [
         { icon: <FiHome />, label: "Tableau de bord", path: "/dashboard" }, 
-        { icon: <FiAlertTriangle />, label: "Alertes & Recommandations", path: "/alertes" },
+        { icon: <FiAlertTriangle />, label: "Alertes & Recommandations", path: "/recommendations" },
       ],
     },
     {
@@ -48,7 +48,7 @@ const Sidebar = ({ isOpen, isAdmin = false }) => {
       items: [
         { icon: <FiUsers />, label: "Classement", path: "/classement" },
         { icon: <FiMessageSquare />, label: "Fil d'actualité", path: "/feed" },
-        { icon: <FiCalendar />, label: "Événements", path: "/evenements" },
+        { icon: <FiCalendar />, label: "Événements", path: "/events" },
         { icon: <FiAward />, label: "Récompenses", path: "/recompenses" },
       ],
     },

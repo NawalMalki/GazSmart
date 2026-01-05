@@ -15,33 +15,49 @@ const ConsommationGaz = () => {
   const { theme } = useTheme()
   const [period, setPeriod] = useState("mensuel")
 
+  // Conversion exacte : 130 Nm³ et 750 kWh par tonne (1000 kg)
+  const BIOGAS_PER_KG = 130 / 1000; // Nm³ par kg
+  const ENERGY_PER_KG = 750 / 1000; // kWh par kg
+
   const monthlyData = [
-    { label: "Jan", bio: 12.5, nonBio: 8.2, energieProduite: 18.4, gazEconomise: 15.2 },
-    { label: "Fév", bio: 14.2, nonBio: 9.1, energieProduite: 20.8, gazEconomise: 17.5 },
-    { label: "Mar", bio: 16.8, nonBio: 10.5, energieProduite: 24.2, gazEconomise: 20.8 },
-    { label: "Avr", bio: 15.3, nonBio: 9.8, energieProduite: 22.5, gazEconomise: 19.1 },
-    { label: "Mai", bio: 18.1, nonBio: 11.2, energieProduite: 26.1, gazEconomise: 22.4 },
-    { label: "Jun", bio: 19.5, nonBio: 12.8, energieProduite: 28.7, gazEconomise: 24.8 },
-    { label: "Jul", bio: 21.2, nonBio: 13.5, energieProduite: 30.9, gazEconomise: 27.1 },
-    { label: "Aoû", bio: 20.8, nonBio: 14.1, energieProduite: 31.2, gazEconomise: 27.8 },
-    { label: "Sep", bio: 17.9, nonBio: 11.8, energieProduite: 26.5, gazEconomise: 23.2 },
-    { label: "Oct", bio: 16.2, nonBio: 10.3, energieProduite: 23.8, gazEconomise: 20.5 },
-    { label: "Nov", bio: 14.7, nonBio: 9.5, energieProduite: 21.6, gazEconomise: 18.7 },
-    { label: "Déc", bio: 13.1, nonBio: 8.7, energieProduite: 19.5, gazEconomise: 16.8 },
-  ]
+    { label: "Jan", bio: 12.5, nonBio: 8.2 },
+    { label: "Fév", bio: 14.2, nonBio: 9.1 },
+    { label: "Mar", bio: 16.8, nonBio: 10.5 },
+    { label: "Avr", bio: 15.3, nonBio: 9.8 },
+    { label: "Mai", bio: 18.1, nonBio: 11.2 },
+    { label: "Jun", bio: 19.5, nonBio: 12.8 },
+    { label: "Jul", bio: 21.2, nonBio: 13.5 },
+    { label: "Aoû", bio: 20.8, nonBio: 14.1 },
+    { label: "Sep", bio: 17.9, nonBio: 11.8 },
+    { label: "Oct", bio: 16.2, nonBio: 10.3 },
+    { label: "Nov", bio: 14.7, nonBio: 9.5 },
+    { label: "Déc", bio: 13.1, nonBio: 8.7 },
+  ].map(item => ({
+    ...item,
+    energieProduite: item.bio * ENERGY_PER_KG,
+    gazEconomise: item.bio * BIOGAS_PER_KG
+  }));
 
   const quarterlyData = [
-    { label: "Q1", bio: 43.5, nonBio: 27.8, energieProduite: 63.4, gazEconomise: 53.5 },
-    { label: "Q2", bio: 52.9, nonBio: 33.8, energieProduite: 77.3, gazEconomise: 66.3 },
-    { label: "Q3", bio: 59.9, nonBio: 39.4, energieProduite: 88.6, gazEconomise: 78.1 },
-    { label: "Q4", bio: 44.0, nonBio: 28.5, energieProduite: 64.9, gazEconomise: 56.0 },
-  ]
+    { label: "Q1", bio: 43.5, nonBio: 27.8 },
+    { label: "Q2", bio: 52.9, nonBio: 33.8 },
+    { label: "Q3", bio: 59.9, nonBio: 39.4 },
+    { label: "Q4", bio: 44.0, nonBio: 28.5 },
+  ].map(item => ({
+    ...item,
+    energieProduite: item.bio * ENERGY_PER_KG,
+    gazEconomise: item.bio * BIOGAS_PER_KG
+  }));
 
   const yearlyData = [
-    { label: "2022", bio: 165, nonBio: 105, energieProduite: 240, gazEconomise: 198 },
-    { label: "2023", bio: 185, nonBio: 118, energieProduite: 270, gazEconomise: 225 },
-    { label: "2024", bio: 200, nonBio: 129, energieProduite: 294, gazEconomise: 254 },
-  ]
+    { label: "2022", bio: 165, nonBio: 105 },
+    { label: "2023", bio: 185, nonBio: 118 },
+    { label: "2024", bio: 200, nonBio: 129 },
+  ].map(item => ({
+    ...item,
+    energieProduite: item.bio * ENERGY_PER_KG,
+    gazEconomise: item.bio * BIOGAS_PER_KG
+  }));
 
   const getData = () => {
     switch (period) {
@@ -62,7 +78,7 @@ const ConsommationGaz = () => {
       ${theme === 'dark' 
         ? 'bg-gray-900 border-gray-700' 
         : 'bg-white border-gray-200'}`}>
-      
+
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -86,7 +102,7 @@ const ConsommationGaz = () => {
                     : 'bg-blue-100 text-blue-600'
                   : theme === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}` 
               }
             >
               {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -134,7 +150,7 @@ const ConsommationGaz = () => {
           ${theme === 'dark' ? 'bg-purple-900/30 border-purple-700 text-purple-300' : 'bg-purple-50 border-purple-300 text-purple-700'}`}>
           <p className="text-xs font-medium mb-1">Gaz Produit</p>
           <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold`}>
-            {totalGazEco.toFixed(1)} m³
+            {totalGazEco.toFixed(1)} Nm³
           </p>
           <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>
             Impact direct
