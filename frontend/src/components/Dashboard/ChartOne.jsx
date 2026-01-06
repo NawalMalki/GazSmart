@@ -58,18 +58,19 @@ const ConsommationGaz = () => {
   const totalGazEco = data.reduce((a, b) => a + b.gazEconomise, 0)
 
   return (
-    <div className={`rounded-xl shadow-sm p-6 border transition-colors duration-300
-      ${theme === 'dark' 
-        ? 'bg-gray-900 border-gray-700' 
-        : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-lg p-6 border transition-colors duration-200 ${
+      theme === 'dark' 
+        ? 'bg-gray-900/60 backdrop-blur-sm border-gray-800' 
+        : 'bg-white/80 backdrop-blur-sm border-gray-200'
+    }`}>
       
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-lg font-semibold`}>
+          <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base font-semibold`}>
             Ma Contribution Énergétique
           </h3>
-          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+          <p className={`${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'} text-sm`}>
             Déchets déposés → Énergie produite
           </p>
         </div>
@@ -79,15 +80,15 @@ const ConsommationGaz = () => {
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1 text-sm rounded-lg transition-all
-                ${period === p 
+              className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all duration-150 border ${
+                period === p 
                   ? theme === 'dark' 
-                    ? 'bg-blue-900 text-blue-300'
-                    : 'bg-blue-100 text-blue-600'
+                    ? 'bg-gray-800 text-white border-gray-700'
+                    : 'bg-gray-900 text-white border-gray-900'
                   : theme === 'dark'
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
-              }
+                    ? 'bg-transparent text-gray-400 hover:text-gray-300 border-gray-700 hover:bg-gray-800/50'
+                    : 'bg-transparent text-gray-600 hover:text-gray-900 border-gray-200 hover:bg-gray-50'
+              }`}
             >
               {p.charAt(0).toUpperCase() + p.slice(1)}
             </button>
@@ -95,87 +96,138 @@ const ConsommationGaz = () => {
         </div>
       </div>
 
-      {/* STATS CARDS */}
+      {/* STATS CARDS - MÊME COULEUR */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className={`p-4 rounded-lg border transition-colors duration-300
-          ${theme === 'dark' ? 'bg-green-900/30 border-green-700 text-green-300' : 'bg-green-50 border-green-300 text-green-700'}`}>
-          <p className="text-xs font-medium mb-1">Déchets Bio</p>
-          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold`}>
-            {totalBio.toFixed(1)} kg
+        <div className={`p-4 rounded-lg border transition-colors duration-200 ${
+          theme === 'dark' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50/80 border-gray-200'
+        }`}>
+          <p className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
+            Déchets Bio
           </p>
-          <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold tabular-nums`}>
+            {totalBio.toFixed(1)} <span className="text-sm font-normal">kg</span>
+          </p>
+          <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
             Méthanisation
           </p>
         </div>
 
-        <div className={`p-4 rounded-lg border transition-colors duration-300
-          ${theme === 'dark' ? 'bg-orange-900/30 border-orange-700 text-orange-300' : 'bg-orange-50 border-orange-300 text-orange-700'}`}>
-          <p className="text-xs font-medium mb-1">Déchets Non-Bio</p>
-          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold`}>
-            {totalNonBio.toFixed(1)} kg
+        <div className={`p-4 rounded-lg border transition-colors duration-200 ${
+          theme === 'dark' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50/80 border-gray-200'
+        }`}>
+          <p className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
+            Déchets Non-Bio
           </p>
-          <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`}>
+          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold tabular-nums`}>
+            {totalNonBio.toFixed(1)} <span className="text-sm font-normal">kg</span>
+          </p>
+          <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
             Micropyrolyse
           </p>
         </div>
 
-        <div className={`p-4 rounded-lg border transition-colors duration-300
-          ${theme === 'dark' ? 'bg-blue-900/30 border-blue-700 text-blue-300' : 'bg-blue-50 border-blue-300 text-blue-700'}`}>
-          <p className="text-xs font-medium mb-1">Énergie Produite</p>
-          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold`}>
-            {totalEnergie.toFixed(1)} kWh
+        <div className={`p-4 rounded-lg border transition-colors duration-200 ${
+          theme === 'dark' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50/80 border-gray-200'
+        }`}>
+          <p className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
+            Énergie Produite
           </p>
-          <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold tabular-nums`}>
+            {totalEnergie.toFixed(1)} <span className="text-sm font-normal">kWh</span>
+          </p>
+          <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
             Contribution totale
           </p>
         </div>
 
-        <div className={`p-4 rounded-lg border transition-colors duration-300
-          ${theme === 'dark' ? 'bg-purple-900/30 border-purple-700 text-purple-300' : 'bg-purple-50 border-purple-300 text-purple-700'}`}>
-          <p className="text-xs font-medium mb-1">Gaz Produit</p>
-          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold`}>
-            {totalGazEco.toFixed(1)} m³
+        <div className={`p-4 rounded-lg border transition-colors duration-200 ${
+          theme === 'dark' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50/80 border-gray-200'
+        }`}>
+          <p className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
+            Gaz Produit
           </p>
-          <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>
+          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold tabular-nums`}>
+            {totalGazEco.toFixed(1)} <span className="text-sm font-normal">m³</span>
+          </p>
+          <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
             Impact direct
           </p>
         </div>
       </div>
 
       {/* GRAPH */}
-      <div className="w-full h-72">
+      <div className="w-full h-72 mb-5">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#d1d5db'} opacity={0.3}/>
-            <XAxis dataKey="label" stroke={theme === 'dark' ? '#d1d5db' : '#111827'} />
-            <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#111827'} />
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} 
+              opacity={0.3}
+            />
+            <XAxis 
+              dataKey="label" 
+              stroke={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
+              style={{ fontSize: '12px' }}
+            />
+            <YAxis 
+              stroke={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
+              style={{ fontSize: '12px' }}
+            />
             <Tooltip 
               contentStyle={{ 
                 backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff', 
                 color: theme === 'dark' ? '#f9fafb' : '#111827',
                 borderRadius: '8px',
-                border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`
+                border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
+                fontSize: '12px'
               }} 
             />
-            <Legend wrapperStyle={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }} />
-            <Line type="monotone" dataKey="energieProduite" name="Énergie produite (kWh)"
-              stroke="#3B82F6" strokeWidth={3} dot={{ r: 5, fill: '#3B82F6' }} />
-            <Line type="monotone" dataKey="gazEconomise" name="Gaz économisé (m³)"
-              stroke="#10B981" strokeWidth={3} dot={{ r: 5, fill: '#10B981' }} />
+            <Legend 
+              wrapperStyle={{ 
+                color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                fontSize: '12px'
+              }} 
+            />
+            <Line 
+              type="monotone" 
+              dataKey="energieProduite" 
+              name="Énergie produite (kWh)"
+              stroke={theme === 'dark' ? '#60A5FA' : '#3B82F6'}
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: theme === 'dark' ? '#60A5FA' : '#3B82F6' }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="gazEconomise" 
+              name="Gaz économisé (m³)"
+              stroke={theme === 'dark' ? '#34D399' : '#10B981'}
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: theme === 'dark' ? '#34D399' : '#10B981' }}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {/* INSIGHTS */}
-      <div className={`mt-6 p-4 rounded-lg border transition-colors duration-300
-        ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700 text-gray-400' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
-        <p className="text-sm mb-2">
-          💡 <span className="font-semibold">Comment ça marche ?</span>
+      <div className={`p-4 rounded-lg border transition-colors duration-200 ${
+        theme === 'dark' ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50/80 border-gray-200'
+      }`}>
+        <p className={`text-sm mb-2 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+          Comment ça marche ?
         </p>
-        <ul className="text-xs space-y-1 ml-4">
-          <li>• <span className="text-green-500 font-medium">Déchets bio</span> → Méthanisation → Production de biogaz</li>
-          <li>• <span className="text-orange-500 font-medium">Déchets non-bio</span> → Micropyrolyse → Production d'énergie thermique</li>
-          <li>• Plus vous triez, plus vous contribuez à réduire la consommation de gaz du bâtiment !</li>
+        <ul className={`text-xs space-y-1.5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+          <li className="flex items-start gap-2">
+            <span className="mt-1.5 w-1 h-1 rounded-full bg-current flex-shrink-0" />
+            <span><strong className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Déchets bio</strong> → Méthanisation → Production de biogaz</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-1.5 w-1 h-1 rounded-full bg-current flex-shrink-0" />
+            <span><strong className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Déchets non-bio</strong> → Micropyrolyse → Production d'énergie thermique</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-1.5 w-1 h-1 rounded-full bg-current flex-shrink-0" />
+            <span>Plus vous triez, plus vous contribuez à réduire la consommation de gaz du bâtiment</span>
+          </li>
         </ul>
       </div>
     </div>

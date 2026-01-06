@@ -21,6 +21,9 @@ import FeedPage from "./pages/FeedPage"
 import "./index.css"
 import CuisineMaligne from "./pages/CuisineMaligne"
 import DefiTemperature from "./pages/DefiTemperature"
+import RecommendationsPage from "./pages/RecommandationsPage"
+import Events from "./pages/Events"
+import Leaderboard from "./pages/LeaderBord"
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -153,6 +156,43 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+
+ <Route
+        path="/events"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <Events />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/classement"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <Leaderboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+
+      
+
+         <Route
+      path="/recommendations"
+      element={
+       <ProtectedRoute>
+        <DashboardLayout>
+          <RecommendationsPage />
+        </DashboardLayout>
+       </ProtectedRoute>
+  }
+/>
 
       <Route path="/feed" 
         element={
