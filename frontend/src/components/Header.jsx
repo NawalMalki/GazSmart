@@ -21,7 +21,7 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
     "/dashboard": "Tableau de bord",
     "/defis": "Défis disponibles",
     "/chrono-douche": "Chrono Douche",
-    "/alertes": "Alertes & Recommandations",
+    "/recommendations": "Alertes & Recommandations",
     "/defi-temperature": "Défi Température",
     "/cuisine-maligne": "Cuisine Maligne",
     "/economie-eclair": "Économie Éclair",
@@ -30,6 +30,8 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
     "/events": "Événements",
     "/recompenses": "Récompenses",
     "/profile": "Profil",
+    "/adminspace/feed": "Modération du feed",
+    "/adminspace/evenements": "Gestion des événements",
   }
 
   const getCurrentPageName = () => pageNames[location.pathname] || "Tableau de bord"

@@ -19,6 +19,93 @@ def get_db_connection():
     )
     return connection
 
+
+def create_events_table():
+    """Crée la table des événements si elle n'existe pas"""
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS events (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    title VARCHAR(255) NOT NULL,
+                    date DATE NOT NULL,
+                    time TIME NOT NULL,
+                    location VARCHAR(255) NOT NULL,
+                    description TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    created_by INT,
+                    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+                    INDEX idx_date (date),
+                    INDEX idx_location (location)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+        connection.commit()
+        connection.close()
+        print("Table des événements créée / vérifiée")
+    except Exception as e:
+        print(f"Erreur lors de la création de la table events : {str(e)}")
+
+# Ajoutez cette fonction à database.py
+def create_posts_table():
+    """Crée la table des posts si elle n'existe pas"""
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS posts (
+                    id SERIAL PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    content TEXT NOT NULL,
+                    image_url VARCHAR(500),
+                    likes_count INT DEFAULT 0,
+                    comments_count INT DEFAULT 0,
+                    shares_count INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    INDEX idx_user_id (user_id),
+                    INDEX idx_created_at (created_at DESC)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            
+            # Table pour les commentaires
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS comments (
+                    id SERIAL PRIMARY KEY,
+                    post_id INT NOT NULL,
+                    user_id INT NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    edited_at TIMESTAMP NULL,
+                    is_edited BOOLEAN DEFAULT FALSE,
+                    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    INDEX idx_post_id (post_id),
+                    INDEX idx_user_id (user_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            
+            # Table pour les likes
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS post_likes (
+                    id SERIAL PRIMARY KEY,
+                    post_id INT NOT NULL,
+                    user_id INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_like (post_id, user_id),
+                    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+        connection.commit()
+        connection.close()
+        print("Tables des posts, commentaires et likes créées / vérifiées")
+    except Exception as e:
+        print(f"Erreur lors de la création des tables de posts : {str(e)}")        
+
+
 # Créer les bases de données et les tables dendans si elles n'existent pas + Initialiser certains données
 def init_db():
     try:
@@ -119,9 +206,15 @@ def init_db():
             
             connection.commit()
         connection.close()
+        
+        # CRÉER LA TABLE DES ÉVÉNEMENTS - AJOUTÉ ICI
+        create_events_table()
+        create_posts_table()
+        
         print("Base de données initialisée avec succès")
         print("Table des utilisateurs créée / vérifiée")
         print("Table des tokens de vérification créée / vérifiée")
+        print("Table des événements créée / vérifiée")
 
     except Exception as e:
         print(f"Erreur lors de l'initialisation de la base de données : {str(e)}")

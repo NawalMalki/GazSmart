@@ -49,7 +49,6 @@ const Sidebar = ({ isOpen, isAdmin = false }) => {
         { icon: <FiUsers />, label: "Classement", path: "/classement" },
         { icon: <FiMessageSquare />, label: "Fil d'actualité", path: "/feed" },
         { icon: <FiCalendar />, label: "Événements", path: "/events" },
-        { icon: <FiAward />, label: "Récompenses", path: "/recompenses" },
       ],
     },
   ]
@@ -73,7 +72,7 @@ const Sidebar = ({ isOpen, isAdmin = false }) => {
     {
       title: "COMMUNAUTÉ",
       items: [
-        { icon: <FiMessageSquare />, label: "Contrôle des postes", path: "/adminspace/feed" },
+        { icon: <FiMessageSquare />, label: "Contrôle des posts", path: "/adminspace/feed" },
         { icon: <FiCalendar />, label: "Gestion des évenements", path: "/adminspace/evenements" },
        
       ],

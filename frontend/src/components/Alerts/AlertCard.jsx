@@ -8,7 +8,7 @@ const icons = {
 
 export default function AlertCard({ alert }) {
   return (
-    <div className="flex gap-4 p-4 bg-white rounded-xl shadow-sm border">
+    <div className="flex gap-4 p-4 bg-white rounded-xl shadow-sm">
       <div className="text-2xl">{icons[alert.type]}</div>
 
       <div className="flex-1">

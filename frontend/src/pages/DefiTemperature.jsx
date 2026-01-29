@@ -29,7 +29,6 @@ const DefiTemperature = () => {
     const isValid = currentTemp === TARGET_TEMP
     const today = new Date().toLocaleDateString("fr-FR", { weekday: "short" })
     
-    // Mettre à jour les logs
     const newLog = {
       date: new Date().toLocaleDateString("fr-FR"),
       temp: currentTemp,
@@ -38,7 +37,6 @@ const DefiTemperature = () => {
     }
     setDailyLogs(prev => [newLog, ...prev].slice(0, 7))
 
-    // Mettre à jour la semaine
     const dayIndex = new Date().getDay()
     const adjustedIndex = dayIndex === 0 ? 6 : dayIndex - 1
     
@@ -50,12 +48,10 @@ const DefiTemperature = () => {
     }
     setWeekProgress(updatedWeek)
 
-    // Calculer les points
     if (isValid) {
       setTotalPoints(prev => prev + DAILY_POINTS)
       setCurrentStreak(prev => prev + 1)
       
-      // Bonus si 7 jours consécutifs
       if (currentStreak + 1 >= 7) {
         setTotalPoints(prev => prev + WEEKLY_BONUS)
         setCurrentStreak(0)
@@ -65,28 +61,24 @@ const DefiTemperature = () => {
     }
   }
 
-  // Conseils selon la température
   const getAdvice = () => {
     if (currentTemp < 19) {
       return {
-        icon: "🥶",
         text: "Température trop basse ! Augmentez le chauffage pour atteindre 19°C.",
-        color: theme === "dark" ? "text-blue-400" : "text-blue-600",
-        bg: theme === "dark" ? "bg-blue-900/20" : "bg-blue-50"
+        color: theme === "dark" ? "text-blue-300" : "text-blue-700",
+        bg: theme === "dark" ? "bg-blue-500/10" : "bg-blue-50/50"
       }
     } else if (currentTemp > 19) {
       return {
-        icon: "🔥",
         text: "Température trop élevée ! Réduisez le chauffage à 19°C pour économiser.",
-        color: theme === "dark" ? "text-red-400" : "text-red-600",
-        bg: theme === "dark" ? "bg-red-900/20" : "bg-red-50"
+        color: theme === "dark" ? "text-red-300" : "text-red-700",
+        bg: theme === "dark" ? "bg-red-500/10" : "bg-red-50/50"
       }
     } else {
       return {
-        icon: "✅",
         text: "Parfait ! Température idéale pour le confort et l'économie d'énergie.",
-        color: theme === "dark" ? "text-green-400" : "text-green-600",
-        bg: theme === "dark" ? "bg-green-900/20" : "bg-green-50"
+        color: theme === "dark" ? "text-green-300" : "text-green-700",
+        bg: theme === "dark" ? "bg-green-500/10" : "bg-green-50/50"
       }
     }
   }
@@ -95,37 +87,26 @@ const DefiTemperature = () => {
   const validatedDays = weekProgress.filter(d => d.validated).length
 
   return (
-    <div className={`min-h-screen p-4 sm:p-6 transition-colors ${theme === "dark" ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen p-4 sm:p-6 transition-colors duration-200 ${theme === "dark" ? "bg-gray-950" : "bg-gray-50"}`}>
       <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-blue-900/30" : "bg-blue-100"}`}>
-            <FiThermometer className={`w-6 h-6 ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
-          </div>
-          <div>
-            <h1 className={`text-2xl font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>Défi Température</h1>
-            <p className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
-              Maintenez 19°C pendant 7 jours pour maximiser vos économies
-            </p>
-          </div>
-        </div>
+     
 
         {/* Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
           {/* Temperature Control */}
           <div className="lg:col-span-1">
-            <div className={`rounded-xl p-6 shadow-md border h-full flex flex-col justify-center transition-colors ${
+            <div className={`rounded-lg p-6 border h-full flex flex-col justify-center transition-colors duration-200 ${
               theme === "dark" 
-                ? "bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border-blue-800" 
-                : "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200"
+                ? "bg-gray-900/60 backdrop-blur-sm border-gray-800" 
+                : "bg-white/80 backdrop-blur-sm border-gray-200"
             }`}>
               <div className="text-center mb-6">
-                <div className={`text-6xl font-bold mb-2 font-mono ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <div className={`text-6xl font-bold mb-2 tabular-nums ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
                   {currentTemp}°C
                 </div>
-                <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <p className={`text-sm ${theme === "dark" ? "text-gray-500" : "text-gray-600"}`}>
                   Température actuelle
                 </p>
               </div>
@@ -138,43 +119,42 @@ const DefiTemperature = () => {
                   max="22"
                   value={currentTemp}
                   onChange={(e) => setCurrentTemp(parseInt(e.target.value))}
-                  className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer"
                   style={{
                     background: currentTemp === 19 
-                      ? "linear-gradient(to right, #10b981, #10b981)" 
+                      ? theme === "dark" ? "#22c55e" : "#16a34a"
                       : currentTemp < 19 
-                      ? "linear-gradient(to right, #3b82f6, #3b82f6)"
-                      : "linear-gradient(to right, #ef4444, #ef4444)"
+                      ? theme === "dark" ? "#3b82f6" : "#2563eb"
+                      : theme === "dark" ? "#ef4444" : "#dc2626"
                   }}
                 />
                 <div className="flex justify-between mt-2 text-xs">
-                  <span className={theme === "dark" ? "text-blue-400" : "text-blue-600"}>16°C</span>
-                  <span className={theme === "dark" ? "text-green-400" : "text-green-600"} style={{ fontWeight: "bold" }}>19°C</span>
-                  <span className={theme === "dark" ? "text-red-400" : "text-red-600"}>22°C</span>
+                  <span className={theme === "dark" ? "text-gray-500" : "text-gray-500"}>16°C</span>
+                  <span className={theme === "dark" ? "text-gray-300" : "text-gray-700"} style={{ fontWeight: 600 }}>19°C</span>
+                  <span className={theme === "dark" ? "text-gray-500" : "text-gray-500"}>22°C</span>
                 </div>
               </div>
 
               {/* Advice Box */}
-              <div className={`rounded-lg p-4 mb-6 ${advice.bg}`}>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">{advice.icon}</span>
-                  <p className={`text-sm ${advice.color} leading-relaxed`}>
-                    {advice.text}
-                  </p>
-                </div>
+              <div className={`rounded-lg p-4 mb-6 border ${advice.bg} ${
+                theme === "dark" ? "border-gray-800" : "border-gray-200"
+              }`}>
+                <p className={`text-sm ${advice.color} leading-relaxed`}>
+                  {advice.text}
+                </p>
               </div>
 
               {/* Validate Button */}
               <button
                 onClick={validateDay}
-                className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 ${
+                className={`w-full py-3 rounded-lg font-medium transition-all duration-150 ${
                   currentTemp === TARGET_TEMP
                     ? theme === "dark"
-                      ? "bg-green-500 hover:bg-green-600 text-white"
+                      ? "bg-green-600 hover:bg-green-700 text-white"
                       : "bg-green-600 hover:bg-green-700 text-white"
                     : theme === "dark"
-                    ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
                 }`}
                 disabled={currentTemp !== TARGET_TEMP}
               >
@@ -185,57 +165,63 @@ const DefiTemperature = () => {
 
           {/* Stats & Progress */}
           <div className="lg:col-span-2">
-            <div className={`rounded-xl p-6 shadow-md border h-full transition-colors ${
-              theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            <div className={`rounded-lg p-6 border h-full transition-colors duration-200 ${
+              theme === "dark" ? "bg-gray-900/60 backdrop-blur-sm border-gray-800" : "bg-white/80 backdrop-blur-sm border-gray-200"
             }`}>
 
-              {/* Stats Grid */}
+              {/* Stats Grid - MÊME COULEUR pour tout */}
               <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className={`rounded-lg p-4 text-center ${theme === "dark" ? "bg-blue-900/20" : "bg-gradient-to-br from-blue-50 to-cyan-50"}`}>
-                  <div className={`text-2xl font-bold mb-1 ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}>
+                <div className={`rounded-lg p-4 text-center border ${
+                  theme === "dark" ? "bg-gray-800/40 border-gray-700" : "bg-gray-50/80 border-gray-200"
+                }`}>
+                  <div className={`text-2xl font-bold mb-1 tabular-nums ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
                     {validatedDays}/7
                   </div>
-                  <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>Cette semaine</div>
+                  <div className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-600"}`}>Cette semaine</div>
                 </div>
-                <div className={`rounded-lg p-4 text-center ${theme === "dark" ? "bg-orange-900/20" : "bg-gradient-to-br from-orange-50 to-amber-50"}`}>
-                  <div className={`text-2xl font-bold mb-1 ${theme === "dark" ? "text-orange-400" : "text-orange-600"}`}>
+                <div className={`rounded-lg p-4 text-center border ${
+                  theme === "dark" ? "bg-gray-800/40 border-gray-700" : "bg-gray-50/80 border-gray-200"
+                }`}>
+                  <div className={`text-2xl font-bold mb-1 tabular-nums ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
                     {currentStreak}
                   </div>
-                  <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>Série en cours</div>
+                  <div className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-600"}`}>Série en cours</div>
                 </div>
-                <div className={`rounded-lg p-4 text-center ${theme === "dark" ? "bg-green-900/20" : "bg-gradient-to-br from-green-50 to-emerald-50"}`}>
-                  <div className={`text-2xl font-bold mb-1 ${theme === "dark" ? "text-green-400" : "text-green-600"}`}>
+                <div className={`rounded-lg p-4 text-center border ${
+                  theme === "dark" ? "bg-gray-800/40 border-gray-700" : "bg-gray-50/80 border-gray-200"
+                }`}>
+                  <div className={`text-2xl font-bold mb-1 tabular-nums ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
                     {totalPoints}
                   </div>
-                  <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>Points totaux</div>
+                  <div className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-600"}`}>Points totaux</div>
                 </div>
               </div>
 
               {/* Weekly Progress */}
               <div className="mb-6">
-                <h3 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-                  <FiCalendar className={`w-4 h-4 ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
+                <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <FiCalendar className="w-4 h-4" />
                   Progression de la semaine
                 </h3>
                 <div className="grid grid-cols-7 gap-2">
                   {weekProgress.map((day, index) => (
                     <div
                       key={index}
-                      className={`rounded-lg p-3 text-center transition-all ${
+                      className={`rounded-lg p-3 text-center transition-all duration-150 border ${
                         day.validated
                           ? theme === "dark"
-                            ? "bg-green-900/30 border-2 border-green-600"
-                            : "bg-green-50 border-2 border-green-400"
+                            ? "bg-green-500/10 border-green-600"
+                            : "bg-green-50 border-green-400"
                           : day.temp !== null
                           ? theme === "dark"
-                            ? "bg-red-900/30 border-2 border-red-600"
-                            : "bg-red-50 border-2 border-red-400"
+                            ? "bg-red-500/10 border-red-600"
+                            : "bg-red-50 border-red-400"
                           : theme === "dark"
-                          ? "bg-gray-700 border-2 border-gray-600"
-                          : "bg-gray-100 border-2 border-gray-300"
+                          ? "bg-gray-800/40 border-gray-700"
+                          : "bg-gray-50 border-gray-200"
                       }`}
                     >
-                      <div className={`text-xs font-semibold mb-1 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                      <div className={`text-xs font-medium mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
                         {day.day}
                       </div>
                       {day.validated ? (
@@ -243,7 +229,7 @@ const DefiTemperature = () => {
                       ) : day.temp !== null ? (
                         <FiXCircle className={`w-5 h-5 mx-auto ${theme === "dark" ? "text-red-400" : "text-red-600"}`} />
                       ) : (
-                        <FiClock className={`w-5 h-5 mx-auto ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`} />
+                        <FiClock className={`w-5 h-5 mx-auto ${theme === "dark" ? "text-gray-600" : "text-gray-400"}`} />
                       )}
                     </div>
                   ))}
@@ -252,21 +238,21 @@ const DefiTemperature = () => {
 
               {/* Recent Logs */}
               <div>
-                <h3 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-                  <FiTrendingDown className={`w-4 h-4 ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
+                <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <FiTrendingDown className="w-4 h-4" />
                   Historique récent
                 </h3>
                 <div className="space-y-2">
                   {dailyLogs.length === 0 ? (
-                    <p className={`text-sm text-center py-4 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                    <p className={`text-sm text-center py-4 ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
                       Aucune journée validée pour l'instant
                     </p>
                   ) : (
                     dailyLogs.map((log, index) => (
                       <div
                         key={index}
-                        className={`flex justify-between items-center rounded-lg px-4 py-3 transition-colors ${
-                          theme === "dark" ? "bg-gray-900/50" : "bg-gray-50"
+                        className={`flex justify-between items-center rounded-lg px-4 py-3 border transition-colors duration-150 ${
+                          theme === "dark" ? "bg-gray-800/40 border-gray-700" : "bg-gray-50/80 border-gray-200"
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -280,14 +266,14 @@ const DefiTemperature = () => {
                           </span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={`text-sm font-bold ${
+                          <span className={`text-sm font-semibold tabular-nums ${
                             log.temp === TARGET_TEMP
                               ? theme === "dark" ? "text-green-400" : "text-green-600"
                               : theme === "dark" ? "text-red-400" : "text-red-600"
                           }`}>
                             {log.temp}°C
                           </span>
-                          <span className={`text-xs font-bold ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}>
+                          <span className={`text-xs font-semibold tabular-nums ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
                             {log.points} pts
                           </span>
                         </div>
@@ -298,11 +284,13 @@ const DefiTemperature = () => {
               </div>
 
               {/* Points System */}
-              <div className={`mt-6 rounded-lg p-4 ${theme === "dark" ? "bg-blue-900/20" : "bg-blue-50"}`}>
-                <h4 className={`text-sm font-bold mb-2 ${theme === "dark" ? "text-blue-300" : "text-blue-800"}`}>
+              <div className={`mt-6 rounded-lg p-4 border ${
+                theme === "dark" ? "bg-blue-500/5 border-blue-900/30" : "bg-blue-50/50 border-blue-200/50"
+              }`}>
+                <h4 className={`text-sm font-semibold mb-2 ${theme === "dark" ? "text-blue-300" : "text-blue-900"}`}>
                   Système de points
                 </h4>
-                <ul className={`text-xs space-y-1 ${theme === "dark" ? "text-blue-200" : "text-blue-700"}`}>
+                <ul className={`text-xs space-y-1 ${theme === "dark" ? "text-blue-300/70" : "text-blue-800/80"}`}>
                   <li>• Journée à 19°C : <strong>{DAILY_POINTS} points</strong></li>
                   <li>• Série de 7 jours : <strong>Bonus de {WEEKLY_BONUS} points</strong></li>
                   <li>• Maximum mensuel : <strong>500 points</strong></li>

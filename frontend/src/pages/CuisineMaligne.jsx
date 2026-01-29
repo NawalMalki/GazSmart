@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { FiClock, FiAward, FiTrendingDown, FiCheck } from "react-icons/fi"
+import { FiClock, FiAward, FiTrendingDown, FiCheck, FiZap } from "react-icons/fi"
 import { useTheme } from "../context/ThemeContext"
 
 const CuisineMaligne = () => {
@@ -7,11 +7,14 @@ const CuisineMaligne = () => {
   
   // État des gestes (checkboxes)
   const [gestures, setGestures] = useState([
-    { id: 1, text: "Utiliser un couvercle sur les casseroles", economy: "25%", checked: false },
-    { id: 2, text: "Éteindre le gaz 2-3 min avant la fin", economy: "10%", checked: false },
-    { id: 3, text: "Adapter la taille du feu à la casserole", economy: "15%", checked: false },
-    { id: 4, text: "Cuisiner plusieurs plats en même temps", economy: "20%", checked: false },
-    { id: 5, text: "Utiliser la cocotte-minute", economy: "30%", checked: false },
+    { id: 1, text: "Utiliser un couvercle sur les casseroles", economy: "25%", type: "cuisson", checked: false },
+    { id: 2, text: "Éteindre la plaque 2-3 min avant la fin (chaleur résiduelle)", economy: "10%", type: "cuisson", checked: false },
+    { id: 3, text: "Adapter la taille du feu/plaque à la casserole", economy: "15%", type: "cuisson", checked: false },
+    { id: 4, text: "Cuisiner plusieurs plats en même temps", economy: "20%", type: "cuisson", checked: false },
+    { id: 5, text: "Utiliser la cocotte-minute ou autocuiseur", economy: "30%", type: "cuisson", checked: false },
+    { id: 6, text: "Dégivrer le réfrigérateur (si besoin)", economy: "30%", type: "frigo", checked: false },
+    { id: 7, text: "Ne pas mettre de plats chauds au frigo", economy: "15%", type: "frigo", checked: false },
+    { id: 8, text: "Utiliser les bons modes de cuisson (four ventilé, micro-ondes)", economy: "20%", type: "electrique", checked: false },
   ])
 
   const [currentDay, setCurrentDay] = useState(1)
@@ -23,8 +26,9 @@ const CuisineMaligne = () => {
   const pointsThresholds = [
     { gestures: 2, points: 20, label: "1-2 gestes/jour" },
     { gestures: 4, points: 50, label: "3-4 gestes/jour" },
-    { gestures: 5, points: 100, label: "5 gestes/jour" },
-    { gestures: 7, points: 200, label: "Série de 7 jours" },
+    { gestures: 6, points: 80, label: "5-6 gestes/jour" },
+    { gestures: 8, points: 120, label: "7-8 gestes/jour" },
+    { gestures: 10, points: 200, label: "Série de 7 jours" },
   ]
 
   // Toggle checkbox
@@ -42,7 +46,8 @@ const CuisineMaligne = () => {
     if (checkedCount === 0) return 0
     if (checkedCount <= 2) return 20
     if (checkedCount <= 4) return 50
-    return 100
+    if (checkedCount <= 6) return 80
+    return 120
   }
 
   // Valider la journée
@@ -59,22 +64,65 @@ const CuisineMaligne = () => {
   // Progression en pourcentage
   const progressPercentage = (currentDay / totalDays) * 100
 
+  // Grouper les gestes par catégorie
+  const gesturesByCategory = {
+    cuisson: gestures.filter(g => g.type === "cuisson"),
+    frigo: gestures.filter(g => g.type === "frigo"),
+    electrique: gestures.filter(g => g.type === "electrique")
+  }
+
+  const CategorySection = ({ title, icon, gestures, color }) => (
+    <div className="mb-6">
+      <h4 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${
+        theme === "dark" ? "text-gray-300" : "text-gray-700"
+      }`}>
+        <span className={color}>{icon}</span>
+        {title}
+      </h4>
+      <div className="space-y-2">
+        {gestures.map((gesture) => (
+          <div
+            key={gesture.id}
+            onClick={() => toggleGesture(gesture.id)}
+            className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+              gesture.checked
+                ? theme === "dark"
+                  ? "bg-orange-900/20 border-orange-600"
+                  : "bg-orange-50 border-orange-400"
+                : theme === "dark"
+                ? "bg-gray-700/50 border-gray-600 hover:border-gray-500"
+                : "bg-gray-50 border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+              gesture.checked
+                ? theme === "dark"
+                  ? "bg-orange-500 border-orange-500"
+                  : "bg-orange-600 border-orange-600"
+                : theme === "dark"
+                ? "border-gray-500"
+                : "border-gray-300"
+            }`}>
+              {gesture.checked && <FiCheck className="w-3 h-3 text-white" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}>
+                {gesture.text}
+              </p>
+              <p className={`text-xs mt-1 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                Économie d'énergie: {gesture.economy}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   return (
     <div className={`min-h-screen p-4 sm:p-6 transition-colors ${theme === "dark" ? "bg-gray-900" : "bg-gray-50"}`}>
       <div className="max-w-7xl mx-auto">
-        
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-orange-900/30" : "bg-orange-100"}`}>
-            <FiClock className={`w-6 h-6 ${theme === "dark" ? "text-orange-400" : "text-orange-600"}`} />
-          </div>
-          <div>
-            <h1 className={`text-2xl font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>Cuisine Maligne</h1>
-            <p className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
-              5 gestes quotidiens pour économiser 20-30% de gaz en cuisine
-            </p>
-          </div>
-        </div>
+     
 
         {/* Main Card */}
         <div className={`rounded-xl p-6 shadow-lg border transition-colors ${
@@ -107,48 +155,39 @@ const CuisineMaligne = () => {
             </div>
           </div>
 
-          {/* Gestes Section */}
+          {/* Gestes Section - Par catégorie */}
           <div className="mb-6">
             <h3 className={`text-base font-bold mb-4 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
               Gestes d'aujourd'hui
             </h3>
-            <div className="space-y-3">
-              {gestures.map((gesture) => (
-                <div
-                  key={gesture.id}
-                  onClick={() => toggleGesture(gesture.id)}
-                  className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                    gesture.checked
-                      ? theme === "dark"
-                        ? "bg-orange-900/20 border-orange-600"
-                        : "bg-orange-50 border-orange-400"
-                      : theme === "dark"
-                      ? "bg-gray-700/50 border-gray-600 hover:border-gray-500"
-                      : "bg-gray-50 border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                    gesture.checked
-                      ? theme === "dark"
-                        ? "bg-orange-500 border-orange-500"
-                        : "bg-orange-600 border-orange-600"
-                      : theme === "dark"
-                      ? "border-gray-500"
-                      : "border-gray-300"
-                  }`}>
-                    {gesture.checked && <FiCheck className="w-3 h-3 text-white" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}>
-                      {gesture.text}
-                    </p>
-                    <p className={`text-xs mt-1 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
-                      Économie: {gesture.economy}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            
+            <CategorySection 
+              title="Cuisson (Gaz & Électrique)"
+              gestures={gesturesByCategory.cuisson}
+              color="text-orange-500"
+            />
+            
+            <CategorySection 
+              title="Réfrigérateur & Conservation"
+              gestures={gesturesByCategory.frigo}
+              color="text-cyan-500"
+            />
+            
+            <CategorySection 
+              title="Électroménager & Modes de cuisson"
+              gestures={gesturesByCategory.electrique}
+              color="text-yellow-500"
+            />
+          </div>
+
+          {/* Info Box */}
+          <div className={`mb-6 rounded-lg p-4 border ${
+            theme === "dark" ? "bg-blue-900/20 border-blue-700" : "bg-blue-50 border-blue-200"
+          }`}>
+            <p className={`text-xs leading-relaxed ${theme === "dark" ? "text-blue-200" : "text-blue-700"}`}>
+              <strong>Bon à savoir :</strong> Ces gestes fonctionnent que vous utilisiez le gaz, des plaques électriques, 
+              ou l'induction. L'important est d'optimiser chaque usage d'énergie en cuisine !
+            </p>
           </div>
 
           {/* Validate Button */}

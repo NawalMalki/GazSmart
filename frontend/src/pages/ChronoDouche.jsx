@@ -45,32 +45,23 @@ const ChronoDouche = () => {
   const currentThreshold = getCurrentThreshold();
 
   return (
-    <div className={`min-h-screen p-4 sm:p-6 transition-colors ${theme === "dark" ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen p-4 sm:p-6 transition-colors duration-200 ${theme === "dark" ? "bg-gray-950" : "bg-gray-50"}`}>
       <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-cyan-900/30" : "bg-cyan-100"}`}>
-            <FiDroplet className={`w-6 h-6 ${theme === "dark" ? "text-cyan-400" : "text-cyan-600"}`} />
-          </div>
-          <div>
-            <h1 className={`text-2xl font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>Chrono Douche</h1>
-            <p className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>Douches courtes = 50% d'économie sur l'eau chaude</p>
-          </div>
-        </div>
+       
 
         {/* Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
           {/* Timer */}
           <div className="lg:col-span-1">
-            <div className={`rounded-xl p-6 shadow-md border h-full flex flex-col justify-center transition-colors ${
+            <div className={`rounded-lg p-6 border h-full flex flex-col justify-center transition-colors duration-200 ${
               theme === "dark" 
-                ? "bg-gradient-to-br from-cyan-900/20 to-blue-900/20 border-cyan-800" 
-                : "bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200"
+                ? "bg-gray-900/60 backdrop-blur-sm border-gray-800" 
+                : "bg-white/80 backdrop-blur-sm border-gray-200"
             }`}>
               <div className="text-center">
-                <div className={`text-5xl sm:text-6xl font-bold mb-6 font-mono tracking-wider ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <div className={`text-6xl font-bold mb-6 tabular-nums tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
                   {formatTime(time)}
                 </div>
 
@@ -78,9 +69,9 @@ const ChronoDouche = () => {
                   {!isRunning ? (
                     <button
                       onClick={startTimer}
-                      className={`w-full px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${
+                      className={`w-full px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-150 ${
                         theme === "dark"
-                          ? "bg-cyan-500 hover:bg-cyan-600 text-white"
+                          ? "bg-cyan-600 hover:bg-cyan-700 text-white"
                           : "bg-cyan-600 hover:bg-cyan-700 text-white"
                       }`}
                     >
@@ -89,9 +80,9 @@ const ChronoDouche = () => {
                   ) : (
                     <button
                       onClick={completeShower}
-                      className={`w-full px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${
+                      className={`w-full px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-150 ${
                         theme === "dark"
-                          ? "bg-green-500 hover:bg-green-600 text-white"
+                          ? "bg-green-600 hover:bg-green-700 text-white"
                           : "bg-green-600 hover:bg-green-700 text-white"
                       }`}
                     >
@@ -102,10 +93,10 @@ const ChronoDouche = () => {
                   {!isRunning && time > 0 && (
                     <button
                       onClick={resetTimer}
-                      className={`w-full px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 ${
+                      className={`w-full px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-150 border ${
                         theme === "dark"
-                          ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
-                          : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                          ? "bg-gray-800 hover:bg-gray-750 text-gray-300 border-gray-700"
+                          : "bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
                       }`}
                     >
                       <FiRotateCcw className="w-4 h-4" /> Réinitialiser
@@ -114,7 +105,7 @@ const ChronoDouche = () => {
                 </div>
 
                 {isRunning && currentThreshold && (
-                  <div className={`mt-4 text-xs font-semibold ${currentThreshold.color}`}>
+                  <div className={`mt-4 text-xs font-medium ${currentThreshold.color}`}>
                     {currentThreshold.label} • {currentThreshold.points} pts
                   </div>
                 )}
@@ -124,59 +115,76 @@ const ChronoDouche = () => {
 
           {/* Stats & Points */}
           <div className="lg:col-span-2">
-            <div className={`rounded-xl p-6 shadow-md border h-full transition-colors ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+            <div className={`rounded-lg p-6 border h-full transition-colors duration-200 ${
+              theme === "dark" ? "bg-gray-900/60 backdrop-blur-sm border-gray-800" : "bg-white/80 backdrop-blur-sm border-gray-200"
+            }`}>
 
-              {/* Stats Grid */}
+              {/* Stats Grid - MÊME COULEUR */}
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className={`rounded-lg p-4 text-center ${theme === "dark" ? "bg-cyan-900/20" : "bg-gradient-to-br from-cyan-50 to-blue-50"}`}>
-                  <div className={`text-3xl font-bold mb-1 ${theme === "dark" ? "text-cyan-400" : "text-cyan-600"}`}>{completedShowers}</div>
-                  <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>Douches validées</div>
-                </div>
-                <div className={`rounded-lg p-4 text-center ${theme === "dark" ? "bg-cyan-900/20" : "bg-gradient-to-br from-cyan-50 to-blue-50"}`}>
-                  <div className={`text-3xl font-bold mb-1 ${theme === "dark" ? "text-cyan-400" : "text-cyan-600"}`}>
-                    {getAverageTime()} <span className="text-xl">min</span>
+                <div className={`rounded-lg p-4 text-center border ${
+                  theme === "dark" ? "bg-gray-800/40 border-gray-700" : "bg-gray-50/80 border-gray-200"
+                }`}>
+                  <div className={`text-3xl font-bold mb-1 tabular-nums ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    {completedShowers}
                   </div>
-                  <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>Temps moyen</div>
+                  <div className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-600"}`}>Douches validées</div>
+                </div>
+                <div className={`rounded-lg p-4 text-center border ${
+                  theme === "dark" ? "bg-gray-800/40 border-gray-700" : "bg-gray-50/80 border-gray-200"
+                }`}>
+                  <div className={`text-3xl font-bold mb-1 tabular-nums ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    {getAverageTime()} <span className="text-lg">min</span>
+                  </div>
+                  <div className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-600"}`}>Temps moyen</div>
                 </div>
               </div>
 
               {/* Progress */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
-                  <span className={`text-xs font-semibold ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                  <span className={`text-xs font-medium ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
                     Objectif: {TARGET_SHOWERS} douches
                   </span>
-                  <span className={`text-xs font-bold ${theme === "dark" ? "text-cyan-400" : "text-cyan-600"}`}>
+                  <span className={`text-xs font-semibold tabular-nums ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
                     {completedShowers}/{TARGET_SHOWERS}
                   </span>
                 </div>
-                <div className={`w-full h-2.5 rounded-full overflow-hidden ${theme === "dark" ? "bg-gray-700" : "bg-gray-200"}`}>
-                  <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full transition-all duration-500 rounded-full" style={{ width: `${(completedShowers / TARGET_SHOWERS) * 100}%` }} />
+                <div className={`w-full h-2 rounded-full overflow-hidden ${theme === "dark" ? "bg-gray-800" : "bg-gray-200"}`}>
+                  <div 
+                    className={`h-full transition-all duration-500 rounded-full ${
+                      theme === "dark" ? "bg-cyan-500" : "bg-cyan-600"
+                    }`} 
+                    style={{ width: `${(completedShowers / TARGET_SHOWERS) * 100}%` }} 
+                  />
                 </div>
               </div>
 
               {/* Points */}
-              <div className={`rounded-lg p-4 mb-6 flex items-center justify-between transition-colors ${
-                theme === "dark" ? "bg-green-900/20" : "bg-gradient-to-br from-green-50 to-emerald-50"
+              <div className={`rounded-lg p-4 mb-6 flex items-center justify-between border ${
+                theme === "dark" ? "bg-green-500/5 border-green-900/30" : "bg-green-50/50 border-green-200/50"
               }`}>
                 <div>
-                  <div className={`text-xs mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>Points totaux</div>
-                  <div className={`text-3xl font-bold ${theme === "dark" ? "text-green-400" : "text-green-600"}`}>{totalPoints}</div>
+                  <div className={`text-xs mb-1 ${theme === "dark" ? "text-gray-500" : "text-gray-600"}`}>Points totaux</div>
+                  <div className={`text-3xl font-bold tabular-nums ${theme === "dark" ? "text-green-400" : "text-green-600"}`}>
+                    {totalPoints}
+                  </div>
                 </div>
-                <FiAward className={`w-10 h-10 ${theme === "dark" ? "text-green-400" : "text-green-600"}`} />
+                <FiAward className={`w-9 h-9 ${theme === "dark" ? "text-green-400" : "text-green-600"}`} />
               </div>
 
               {/* Point System */}
               <div>
-                <h3 className={`text-sm font-bold mb-3 flex items-center gap-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-                  <FiTrendingDown className={`w-4 h-4 ${theme === "dark" ? "text-cyan-400" : "text-cyan-600"}`} />
+                <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <FiTrendingDown className="w-4 h-4" />
                   Système de points
                 </h3>
                 <div className="space-y-2">
                   {pointsThresholds.slice(0, -1).map((threshold, index) => (
-                    <div key={index} className={`flex justify-between items-center rounded-lg px-3 py-2 transition-colors ${theme === "dark" ? "bg-gray-900/50" : "bg-gray-50"}`}>
-                      <span className={`text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>{threshold.label}</span>
-                      <span className={`text-xs font-bold ${threshold.color}`}>{threshold.points} pts</span>
+                    <div key={index} className={`flex justify-between items-center rounded-lg px-3 py-2 border transition-colors duration-150 ${
+                      theme === "dark" ? "bg-gray-800/40 border-gray-700" : "bg-gray-50/80 border-gray-200"
+                    }`}>
+                      <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>{threshold.label}</span>
+                      <span className={`text-xs font-semibold tabular-nums ${threshold.color}`}>{threshold.points} pts</span>
                     </div>
                   ))}
                 </div>

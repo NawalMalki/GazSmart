@@ -17,14 +17,15 @@ import ChronoDouche from "./pages/ChronoDouche"
 import VerifyEmail from "./pages/VerifyEmail"
 import FeedPage from "./pages/FeedPage"
 import Events from "./pages/Events"
-import Leaderboard from "./pages/Leaderboard"
 import CuisineMaligne from "./pages/CuisineMaligne"
 import DefiTemperature from "./pages/DefiTemperature"
-import RecommendationsPage from "./pages/RecommendationsPage"
-
+import RecommendationsPage from "./pages/RecommandationsPage"
+import Leaderboard from "./pages/LeaderBord"
 import { ProtectedRoute } from "./components/ProtectedRoute"
+import EventsPage from './pages/admin/EventsPage';  
+import AdminPostsPage from './pages/admin/AdminPostsPage'; 
 
-import "./index.css"
+
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -162,8 +163,26 @@ function App() {
         }
       />
 
-      <Route
-        path="/feed"
+
+ 
+
+      
+
+
+      
+
+         <Route
+      path="/recommendations"
+      element={
+       <ProtectedRoute>
+        <DashboardLayout>
+          <RecommendationsPage />
+        </DashboardLayout>
+       </ProtectedRoute>
+  }
+/>
+
+      <Route path="/feed" 
         element={
           <ProtectedRoute>
             <DashboardLayout>
@@ -251,12 +270,14 @@ function App() {
         }
       />
 
+    
+
       <Route
         path="/adminspace/feed"
         element={
           <ProtectedRoute requireAdmin>
             <AdminLayout>
-              <h1 className="p-8 text-3xl font-bold">Modération du feed</h1>
+              <AdminPostsPage /> 
             </AdminLayout>
           </ProtectedRoute>
         }
@@ -267,11 +288,13 @@ function App() {
         element={
           <ProtectedRoute requireAdmin>
             <AdminLayout>
-              <h1 className="p-8 text-3xl font-bold">Gestion des événements</h1>
+               <EventsPage /> 
             </AdminLayout>
           </ProtectedRoute>
         }
       />
+
+
 
       <Route
         path="/adminspace/settings"

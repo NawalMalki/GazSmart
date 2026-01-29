@@ -20,9 +20,19 @@ from auth import (
 from email_service import send_verification_email, send_welcome_email
 from database import init_db, get_db_connection # Création et Connexion à la bdd 
 from typing import Optional
+from events import router as events_router
+from posts import router as posts_router
+from posts_admin import router as admin_posts_router
+from fastapi.staticfiles import StaticFiles
+
+from dependencies import get_current_user, get_current_admin
+
 
 # Créer le serveur FastAPI 
 app = FastAPI(title="Auth API", version="1.0.0")
+
+# Ajoutez cette ligne après la création de l'application FastAPI
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Initialiser la base de données 
 init_db()
@@ -35,38 +45,39 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
-def get_current_user(authorization: Optional[str] = Header(None)):
-    """Dependency to get current user from JWT token"""
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Utilisateur non connecté")
+# def get_current_user(authorization: Optional[str] = Header(None)):
+#     """Dependency to get current user from JWT token"""
+#     if not authorization:
+#         raise HTTPException(status_code=401, detail="Utilisateur non connecté")
     
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise HTTPException(status_code=401, detail="Invalid authentication scheme")
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
+#     try:
+#         scheme, token = authorization.split()
+#         if scheme.lower() != "bearer":
+#             raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+#     except ValueError:
+#         raise HTTPException(status_code=401, detail="Invalid authorization header")
     
-    email = verify_token(token)
-    if not email:
-        raise HTTPException(status_code=401, detail="Invalid token")
+#     email = verify_token(token)
+#     if not email:
+#         raise HTTPException(status_code=401, detail="Invalid token")
     
-    user = get_user_by_email(email)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+#     user = get_user_by_email(email)
+#     if not user:
+#         raise HTTPException(status_code=401, detail="User not found")
     
-    return user
+#     return user
 
-def get_current_admin(user: dict = Depends(get_current_user)):
-    """Dependency pour vérifier que l'utilisateur est admin"""
-    if not is_admin(user):
-        raise HTTPException(
-            status_code=403, 
-            detail="Accès refusé : droits administrateur requis"
-        )
-    return user
+# def get_current_admin(user: dict = Depends(get_current_user)):
+#     """Dependency pour vérifier que l'utilisateur est admin"""
+#     if not is_admin(user):
+#         raise HTTPException(
+#             status_code=403, 
+#             detail="Accès refusé : droits administrateur requis"
+#         )
+#     return user
 
 
 
@@ -337,6 +348,13 @@ def resend_verification(request: LoginRequest):
     
     return {"message": "Verification email sent successfully"}
 
+
+app.include_router(events_router)
+app.include_router(posts_router)
+app.include_router(admin_posts_router)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
