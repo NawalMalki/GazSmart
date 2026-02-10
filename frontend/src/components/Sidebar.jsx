@@ -73,7 +73,7 @@ const Sidebar = ({ isOpen, isAdmin = false }) => {
     {
       title: "COMMUNAUTÉ",
       items: [
-        { icon: <FiMessageSquare />, label: "Contrôle des postes", path: "/adminspace/feed" },
+        { icon: <FiMessageSquare />, label: "Contrôle des posts", path: "/adminspace/feed" },
         { icon: <FiCalendar />, label: "Gestion des évenements", path: "/adminspace/evenements" },
        
       ],

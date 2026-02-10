@@ -117,11 +117,118 @@ def init_db():
                 """)
                 print("Compte admin GRDF vérifié")
             
+            # Ajouter la colonne total_points si elle n'existe pas
+            cursor.execute("""
+                SELECT COUNT(*) as count 
+                FROM information_schema.COLUMNS 
+                WHERE TABLE_SCHEMA = %s 
+                AND TABLE_NAME = 'users' 
+                AND COLUMN_NAME = 'total_points'
+            """, (DB_NAME,))
+            
+            result = cursor.fetchone()
+            if result['count'] == 0:
+                cursor.execute("""
+                    ALTER TABLE users 
+                    ADD COLUMN total_points INT DEFAULT 0 AFTER role
+                """)
+                print("Colonne total_points ajoutée à la table users")
+            
+            # ==================== TABLES POUR LES DÉFIS ====================
+            
+            # Table des défis disponibles
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS challenges (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    slug VARCHAR(100) UNIQUE NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    description TEXT,
+                    explanation TEXT,
+                    icon VARCHAR(50),
+                    max_points_per_month INT DEFAULT 0,
+                    energy_savings VARCHAR(255),
+                    target_value DECIMAL(10,2),
+                    target_unit VARCHAR(50),
+                    daily_points INT DEFAULT 10,
+                    weekly_bonus INT DEFAULT 50,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_slug (slug),
+                    INDEX idx_active (is_active)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            
+            # Table des participations aux défis
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS challenge_participations (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    challenge_id INT NOT NULL,
+                    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    current_streak INT DEFAULT 0,
+                    best_streak INT DEFAULT 0,
+                    total_points INT DEFAULT 0,
+                    total_days_validated INT DEFAULT 0,
+                    last_validation_date DATE,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE,
+                    UNIQUE KEY unique_participation (user_id, challenge_id),
+                    INDEX idx_user (user_id),
+                    INDEX idx_challenge (challenge_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            
+            # Table des logs journaliers
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS challenge_daily_logs (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    participation_id INT NOT NULL,
+                    log_date DATE NOT NULL,
+                    value_recorded DECIMAL(10,2),
+                    is_validated BOOLEAN DEFAULT FALSE,
+                    points_earned INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (participation_id) REFERENCES challenge_participations(id) ON DELETE CASCADE,
+                    INDEX idx_participation (participation_id),
+                    INDEX idx_date (log_date)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            
+            # Insérer les défis par défaut s'ils n'existent pas
+            cursor.execute("SELECT COUNT(*) as count FROM challenges")
+            challenge_count = cursor.fetchone()
+            
+            if challenge_count['count'] == 0:
+                default_challenges = [
+                    ('temperature', 'Défi Température', 
+                     'Maintenez votre chauffage à 19°C pendant 30 jours',
+                     'Chaque degré en moins représente environ 7% d économie sur votre facture de chauffage. En maintenant 19°C, température recommandée par l ADEME, vous optimisez votre confort tout en réduisant votre consommation.',
+                     'Thermometer', 900, '7% par degré', 19.0, '°C', 30, 100),
+                    
+                    ('chrono-douche', 'Chrono Douche',
+                     'Réduisez la durée de vos douches et gagnez des points',
+                     'Une douche de 5 minutes consomme environ 60L d eau contre 150-200L pour un bain. En réduisant votre temps de douche, vous économisez eau et énergie pour la chauffer.',
+                     'Droplets', 1200, '10-15L par minute', 5.0, 'minutes', 100, 150),
+                    
+                    ('cuisine-maligne', 'Cuisine Maligne',
+                     'Adoptez les bons gestes en cuisine pour économiser l énergie',
+                     'La cuisine représente environ 10% de la consommation électrique d un foyer. Couvrir les casseroles, utiliser la chaleur résiduelle et bien entretenir ses appareils permet de réduire significativement cette consommation.',
+                     'ChefHat', 800, '20% en cuisine', None, None, 80, 100)
+                ]
+                
+                cursor.executemany("""
+                    INSERT INTO challenges (slug, title, description, explanation, icon, max_points_per_month, energy_savings, target_value, target_unit, daily_points, weekly_bonus)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, default_challenges)
+                print("Défis par défaut créés")
+            
             connection.commit()
         connection.close()
         print("Base de données initialisée avec succès")
         print("Table des utilisateurs créée / vérifiée")
         print("Table des tokens de vérification créée / vérifiée")
+        print("Tables des défis créées / vérifiées")
 
     except Exception as e:
         print(f"Erreur lors de l'initialisation de la base de données : {str(e)}")

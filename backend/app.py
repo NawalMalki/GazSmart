@@ -20,9 +20,13 @@ from auth import (
 from email_service import send_verification_email, send_welcome_email
 from database import init_db, get_db_connection # Création et Connexion à la bdd 
 from typing import Optional
+from challenges import router as challenges_router  # Import du router des défis
 
 # Créer le serveur FastAPI 
 app = FastAPI(title="Auth API", version="1.0.0")
+
+# Inclure le router des défis
+app.include_router(challenges_router)
 
 # Initialiser la base de données 
 init_db()

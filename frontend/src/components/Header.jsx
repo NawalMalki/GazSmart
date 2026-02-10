@@ -28,7 +28,6 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
     "/classement": "Classement",
     "/feed": "Fil d'actualité",
     "/events": "Événements",
-    "/recompenses": "Récompenses",
     "/profile": "Profil",
   }
 

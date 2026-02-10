@@ -25,6 +25,11 @@ import RecommendationsPage from "./pages/RecommandationsPage"
 import Events from "./pages/Events"
 import Leaderboard from "./pages/LeaderBord"
 
+// Admin pages
+import AdminDefis from "./pages/Admindefis"
+import AdminDefiForm from "./pages/Admindefiform"
+import AdminDefiDetail from "./pages/Admindefidetail"
+
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
@@ -121,8 +126,7 @@ function App() {
         }
       />
 
-
-<Route
+      <Route
         path="/cuisine-maligne"
         element={
           <ProtectedRoute>
@@ -133,9 +137,7 @@ function App() {
         }
       />
 
-
-
-<Route
+      <Route
         path="/defi-temperature"
         element={
           <ProtectedRoute>
@@ -157,8 +159,7 @@ function App() {
         }
       />
 
-
- <Route
+      <Route
         path="/events"
         element={
           <ProtectedRoute>
@@ -180,19 +181,16 @@ function App() {
         }
       />
 
-
-      
-
-         <Route
-      path="/recommendations"
-      element={
-       <ProtectedRoute>
-        <DashboardLayout>
-          <RecommendationsPage />
-        </DashboardLayout>
-       </ProtectedRoute>
-  }
-/>
+      <Route
+        path="/recommendations"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <RecommendationsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="/feed" 
         element={
@@ -241,15 +239,50 @@ function App() {
         }
       />
 
+      {/* ROUTES ADMIN DÉFIS - NOUVEAU */}
+      {/* Liste des défis */}
       <Route
         path="/adminspace/defis"
         element={
           <ProtectedRoute requireAdmin={true}>
             <AdminLayout>
-              <div className="p-8">
-                <h1 className="text-3xl font-bold">Gestion des défis</h1>
-                <p className="text-gray-600 mt-2">Créer et modifier les défis</p>
-              </div>
+              <AdminDefis />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Créer un nouveau défi */}
+      <Route
+        path="/adminspace/defis/nouveau"
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <AdminLayout>
+              <AdminDefiForm />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Voir les détails d'un défi */}
+      <Route
+        path="/adminspace/defis/:id"
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <AdminLayout>
+              <AdminDefiDetail />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Modifier un défi */}
+      <Route
+        path="/adminspace/defis/:id/modifier"
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <AdminLayout>
+              <AdminDefiForm />
             </AdminLayout>
           </ProtectedRoute>
         }

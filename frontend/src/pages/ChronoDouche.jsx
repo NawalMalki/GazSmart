@@ -1,14 +1,24 @@
 import { useState, useEffect } from "react";
-import { FiDroplet, FiPlay, FiRotateCcw, FiAward, FiTrendingDown } from "react-icons/fi";
+import { FiDroplet, FiPlay, FiRotateCcw, FiAward, FiTrendingDown, FiAlertCircle } from "react-icons/fi";
 import { useTheme } from "../context/ThemeContext"
+import { useAuth } from "../context/AuthContext"
+import { getParticipationDetails, validateShower, joinChallenge } from "../services/challengesApi"
+import { useNavigate } from "react-router-dom"
 
 const ChronoDouche = () => {
   const { theme } = useTheme(); 
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [completedShowers, setCompletedShowers] = useState(0);
-  const [totalPoints, setTotalPoints] = useState(0);
+  const [participation, setParticipation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [validating, setValidating] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
+  const CHALLENGE_SLUG = "chrono-douche";
   const TARGET_SHOWERS = 10;
 
   const pointsThresholds = [
@@ -17,6 +27,35 @@ const ChronoDouche = () => {
     { max: 600, points: 70, label: "7-10 min", color: theme === "dark" ? "text-orange-400" : "text-orange-600" },
     { max: Infinity, points: 40, label: "10+ min", color: theme === "dark" ? "text-red-400" : "text-red-600" }
   ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        const data = await getParticipationDetails(CHALLENGE_SLUG);
+        setParticipation(data.participation);
+        
+        // Si pas encore participant, joindre automatiquement
+        if (!data.is_participating) {
+          await joinChallenge(CHALLENGE_SLUG);
+          const updatedData = await getParticipationDetails(CHALLENGE_SLUG);
+          setParticipation(updatedData.participation);
+        }
+      } catch (err) {
+        console.error("Erreur:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [user]);
 
   useEffect(() => {
     let interval;
@@ -30,25 +69,111 @@ const ChronoDouche = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const startTimer = () => setIsRunning(true);
-  const resetTimer = () => { setIsRunning(false); setTime(0); };
-  const completeShower = () => {
-    const threshold = pointsThresholds.find(t => time < t.max);
-    setTotalPoints(prev => prev + threshold.points);
-    setCompletedShowers(prev => prev + 1);
-    setIsRunning(false);
-    setTime(0);
+  const startTimer = () => {
+    setError(null);
+    setSuccessMessage(null);
+    setIsRunning(true);
+  };
+  
+  const resetTimer = () => { 
+    setIsRunning(false); 
+    setTime(0); 
+  };
+  
+  const completeShower = async () => {
+    if (!user || validating) return;
+    
+    setValidating(true);
+    setError(null);
+    setSuccessMessage(null);
+    
+    try {
+      const result = await validateShower(CHALLENGE_SLUG, time);
+      
+      setSuccessMessage(
+        `Douche validée! +${result.points_earned} points (${result.duration_minutes} min)${result.bonus_earned > 0 ? ` + Bonus ${result.bonus_earned} pts!` : ''}`
+      );
+      
+      // Mettre à jour les stats localement
+      setParticipation(prev => ({
+        ...prev,
+        total_points: result.total_points,
+        total_days_validated: result.total_showers
+      }));
+      
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setValidating(false);
+      setIsRunning(false);
+      setTime(0);
+    }
   };
 
-  const getAverageTime = () => completedShowers === 0 ? "0.0" : ((completedShowers * 5 * 60) / completedShowers / 60).toFixed(1);
+  const getAverageTime = () => {
+    if (!participation || participation.total_days_validated === 0) return "0.0";
+    // Estimation basée sur le nombre de douches (5 min par défaut)
+    return "5.0";
+  };
+
   const getCurrentThreshold = () => pointsThresholds.find(t => time < t.max);
   const currentThreshold = getCurrentThreshold();
+
+  const completedShowers = participation?.total_days_validated || 0;
+  const totalPoints = participation?.total_points || 0;
+
+  if (!user) {
+    return (
+      <div className={`min-h-screen p-6 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-950' : 'bg-gray-50'}`}>
+        <div className={`text-center p-8 rounded-xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+          <FiAlertCircle className={`w-12 h-12 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+          <h2 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Connexion requise
+          </h2>
+          <p className={`mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            Connectez-vous pour participer au défi chrono douche.
+          </p>
+          <button
+            onClick={() => navigate('/login')}
+            className={`px-6 py-2 rounded-lg font-medium ${
+              theme === 'dark' ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-gray-900 text-white hover:bg-gray-800'
+            }`}
+          >
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen p-6 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-950' : 'bg-gray-50'}`}>
+        <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${theme === 'dark' ? 'border-white' : 'border-gray-900'}`}></div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen p-4 sm:p-6 transition-colors duration-200 ${theme === "dark" ? "bg-gray-950" : "bg-gray-50"}`}>
       <div className="max-w-7xl mx-auto">
 
-       
+        {/* Messages */}
+        {error && (
+          <div className={`mb-4 p-4 rounded-lg border ${
+            theme === 'dark' ? 'bg-red-900/20 border-red-800 text-red-300' : 'bg-red-50 border-red-200 text-red-700'
+          }`}>
+            {error}
+          </div>
+        )}
+        
+        {successMessage && (
+          <div className={`mb-4 p-4 rounded-lg border ${
+            theme === 'dark' ? 'bg-green-900/20 border-green-800 text-green-300' : 'bg-green-50 border-green-200 text-green-700'
+          }`}>
+            {successMessage}
+          </div>
+        )}
 
         {/* Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -80,13 +205,14 @@ const ChronoDouche = () => {
                   ) : (
                     <button
                       onClick={completeShower}
+                      disabled={validating}
                       className={`w-full px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-150 ${
                         theme === "dark"
                           ? "bg-green-600 hover:bg-green-700 text-white"
                           : "bg-green-600 hover:bg-green-700 text-white"
-                      }`}
+                      } ${validating ? 'opacity-50 cursor-wait' : ''}`}
                     >
-                      Terminer
+                      {validating ? 'Enregistrement...' : 'Terminer'}
                     </button>
                   )}
 
@@ -106,7 +232,7 @@ const ChronoDouche = () => {
 
                 {isRunning && currentThreshold && (
                   <div className={`mt-4 text-xs font-medium ${currentThreshold.color}`}>
-                    {currentThreshold.label} • {currentThreshold.points} pts
+                    {currentThreshold.label} = {currentThreshold.points} pts
                   </div>
                 )}
               </div>
@@ -119,7 +245,7 @@ const ChronoDouche = () => {
               theme === "dark" ? "bg-gray-900/60 backdrop-blur-sm border-gray-800" : "bg-white/80 backdrop-blur-sm border-gray-200"
             }`}>
 
-              {/* Stats Grid - MÊME COULEUR */}
+              {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className={`rounded-lg p-4 text-center border ${
                   theme === "dark" ? "bg-gray-800/40 border-gray-700" : "bg-gray-50/80 border-gray-200"
@@ -154,7 +280,7 @@ const ChronoDouche = () => {
                     className={`h-full transition-all duration-500 rounded-full ${
                       theme === "dark" ? "bg-cyan-500" : "bg-cyan-600"
                     }`} 
-                    style={{ width: `${(completedShowers / TARGET_SHOWERS) * 100}%` }} 
+                    style={{ width: `${Math.min((completedShowers / TARGET_SHOWERS) * 100, 100)}%` }} 
                   />
                 </div>
               </div>
