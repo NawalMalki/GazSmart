@@ -163,6 +163,8 @@ const DefisDisponibles = () => {
           </div>
         )}
 
+
+        
         {/* Hero Section */}
         <div className={`rounded-xl p-7 border transition-colors duration-200 ${
           theme === 'dark' 
@@ -242,6 +244,23 @@ const DefisDisponibles = () => {
             </div>
           </div>
         </div>
+
+         <div className={`mt-6 rounded-lg p-5 border ${
+            theme === 'dark' ? 'bg-blue-500/5 border-blue-900/30' : 'bg-blue-50/50 border-blue-200/50'
+          }`}>
+            <h4 className={`font-semibold mb-2 flex items-center gap-2 text-sm ${
+              theme === 'dark' ? 'text-blue-300' : 'text-blue-900'
+            }`}>
+              <FiShield className="w-4 h-4" />
+              Pourquoi une phase d'observation ?
+            </h4>
+            <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-blue-300/70' : 'text-blue-800/80'}`}>
+              Cette période de 3 mois permet de <strong>valider un changement de comportement durable</strong>, 
+              pas simplement une participation ponctuelle. Elle garantit que les badges récompensent 
+              une véritable maturité énergétique et un engagement authentique dans la sobriété.
+            </p>
+          </div>
+
 
         {/* Challenges Section */}
         <div>
@@ -395,21 +414,7 @@ const DefisDisponibles = () => {
             ))}
           </div>
 
-          <div className={`mt-6 rounded-lg p-5 border ${
-            theme === 'dark' ? 'bg-blue-500/5 border-blue-900/30' : 'bg-blue-50/50 border-blue-200/50'
-          }`}>
-            <h4 className={`font-semibold mb-2 flex items-center gap-2 text-sm ${
-              theme === 'dark' ? 'text-blue-300' : 'text-blue-900'
-            }`}>
-              <FiShield className="w-4 h-4" />
-              Pourquoi une phase d'observation ?
-            </h4>
-            <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-blue-300/70' : 'text-blue-800/80'}`}>
-              Cette période de 3 mois permet de <strong>valider un changement de comportement durable</strong>, 
-              pas simplement une participation ponctuelle. Elle garantit que les badges récompensent 
-              une véritable maturité énergétique et un engagement authentique dans la sobriété.
-            </p>
-          </div>
+         
         </div>
 
       </div>

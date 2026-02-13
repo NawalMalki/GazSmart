@@ -1,4 +1,4 @@
-// src/components/Leaderboard/leaderboardData.js
+//
 
 export const leaderboardData = [
   { 

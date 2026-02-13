@@ -280,6 +280,16 @@ const CuisineMaligne = () => {
             </div>
           </div>
 
+            {/* Info Box */}
+          <div className={`mb-6 rounded-lg p-4 border ${
+            theme === "dark" ? "bg-blue-900/20 border-blue-700" : "bg-blue-50 border-blue-200"
+          }`}>
+            <p className={`text-xs leading-relaxed ${theme === "dark" ? "text-blue-200" : "text-blue-700"}`}>
+              <strong>Bon à savoir :</strong> Ces gestes fonctionnent que vous utilisiez le gaz, des plaques électriques, 
+              ou l'induction. L'important est d'optimiser chaque usage d'énergie en cuisine!
+            </p>
+          </div>
+
           {/* Gestes Section - Par catégorie */}
           <div className="mb-6">
             <h3 className={`text-base font-bold mb-4 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
@@ -305,15 +315,7 @@ const CuisineMaligne = () => {
             />
           </div>
 
-          {/* Info Box */}
-          <div className={`mb-6 rounded-lg p-4 border ${
-            theme === "dark" ? "bg-blue-900/20 border-blue-700" : "bg-blue-50 border-blue-200"
-          }`}>
-            <p className={`text-xs leading-relaxed ${theme === "dark" ? "text-blue-200" : "text-blue-700"}`}>
-              <strong>Bon à savoir :</strong> Ces gestes fonctionnent que vous utilisiez le gaz, des plaques électriques, 
-              ou l'induction. L'important est d'optimiser chaque usage d'énergie en cuisine!
-            </p>
-          </div>
+        
 
           {/* Validate Button */}
           <button

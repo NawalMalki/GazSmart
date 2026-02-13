@@ -20,7 +20,7 @@ const Dashboard = () => {
       
       {/* Stats Grid - Fully responsive */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
-        <StatsCard title="Consommation Totale" value="93.9" percentage="+12.5%" icon="revenue" trend="up" />
+        <StatsCard title="Consommation Totale" value="93.9 kWh" percentage="+12.5%" icon="revenue" trend="up" />
         <StatsCard title="Classement immeuble" value="3" percentage="+8.2%" icon="users" trend="up" />
         <StatsCard title="Economie réalisée" value="6%" percentage="+2.1%" icon="orders" trend="up" />
       </div>

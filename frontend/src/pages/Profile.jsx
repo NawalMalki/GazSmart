@@ -208,15 +208,7 @@ const Profile = () => {
                       <p className={`${theme === "dark" ? "text-white" : "text-gray-900"} font-semibold`}>0</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-green-900/30" : "bg-green-100"}`}>
-                      <FiTarget className={`${theme === "dark" ? "text-green-400" : "text-green-600"}`} />
-                    </div>
-                    <div>
-                      <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-600"} text-sm`}>Économies réalisées</p>
-                      <p className={`${theme === "dark" ? "text-white" : "text-gray-900"} font-semibold`}>€0.00</p>
-                    </div>
-                  </div>
+                 
                 </div>
               </div>
             )}

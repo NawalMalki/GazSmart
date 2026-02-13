@@ -1,67 +1,68 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FiPlus, FiEdit2, FiTrash2, FiEye, FiSearch, FiFilter, FiThermometer, FiDroplet, FiZap, FiUsers, FiTrendingUp } from "react-icons/fi"
 import { useTheme } from "../context/ThemeContext"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const AdminDefis = () => {
   const { theme } = useTheme()
+  const navigate = useNavigate()
   
-  // Mock data - normalement viendrait du back
-  const [challenges, setChallenges] = useState([
-    {
-      id: 1,
-      slug: "temperature",
-      title: "Défi Température",
-      description: "Maintenez votre logement à 19°C pendant 7 jours consécutifs",
-      status: "active",
-      max_points: 500,
-      participants: 247,
-      energy_savings: "20 kWh/mois",
-      created_at: "2024-01-15",
-      icon: "thermometer"
-    },
-    {
-      id: 2,
-      slug: "chrono-douche",
-      title: "Chrono Douche",
-      description: "Réduisez votre temps de douche et économisez l'eau chaude",
-      status: "active",
-      max_points: 700,
-      participants: 189,
-      energy_savings: "26 kWh/mois",
-      created_at: "2024-01-20",
-      icon: "droplet"
-    },
-    {
-      id: 3,
-      slug: "cuisine-maligne",
-      title: "Cuisine Maligne",
-      description: "Adoptez des gestes pour réduire la consommation d'énergie en cuisine",
-      status: "active",
-      max_points: 1000,
-      participants: 156,
-      energy_savings: "20 kWh/mois",
-      created_at: "2024-01-25",
-      icon: "zap"
-    },
-    {
-      id: 4,
-      slug: "eco-lavage",
-      title: "Éco-Lavage",
-      description: "Optimisez vos cycles de lave-linge et lave-vaisselle",
-      status: "draft",
-      max_points: 600,
-      participants: 0,
-      energy_savings: "15 kWh/mois",
-      created_at: "2024-02-01",
-      icon: "zap"
-    }
-  ])
-
+  const [challenges, setChallenges] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [challengeToDelete, setChallengeToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState(null)
+
+  // Charger les défis depuis l'API
+  useEffect(() => {
+    fetchChallenges()
+  }, [statusFilter])
+
+  const fetchChallenges = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const token = localStorage.getItem("authToken")
+      
+      if (!token) {
+        navigate("/login")
+        return
+      }
+
+      const url = statusFilter === "all" 
+        ? `${API_URL}/api/admin/challenges/`
+        : `${API_URL}/api/admin/challenges/?status=${statusFilter}`
+
+      const response = await fetch(url, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/json"
+        }
+      })
+
+      if (response.status === 401 || response.status === 403) {
+        navigate("/login")
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error("Erreur lors du chargement des défis")
+      }
+
+      const data = await response.json()
+      setChallenges(data)
+    } catch (err) {
+      console.error("Error fetching challenges:", err)
+      setError("Erreur lors du chargement des défis")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Icones mapping
   const iconComponents = {
@@ -81,9 +82,26 @@ const AdminDefis = () => {
   // Statistiques globales
   const stats = {
     total: challenges.length,
-    active: challenges.filter(c => c.status === "active").length,
-    draft: challenges.filter(c => c.status === "draft").length,
-    totalParticipants: challenges.reduce((sum, c) => sum + c.participants, 0)
+    active: challenges.filter(c => c.is_active === true).length,
+    draft: challenges.filter(c => c.is_active === false).length,
+    totalParticipants: challenges.reduce((sum, c) => sum + (c.participants_count || 0), 0)
+  }
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen p-6 flex items-center justify-center ${
+        theme === 'dark' ? 'bg-gray-950' : 'bg-gray-50'
+      }`}>
+        <div className="text-center">
+          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto ${
+            theme === 'dark' ? 'border-white' : 'border-gray-900'
+          }`}></div>
+          <p className={`mt-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            Chargement des défis...
+          </p>
+        </div>
+      </div>
+    )
   }
 
   const handleDelete = (challenge) => {
@@ -91,20 +109,64 @@ const AdminDefis = () => {
     setShowDeleteModal(true)
   }
 
-  const confirmDelete = () => {
-    if (challengeToDelete) {
+  const confirmDelete = async () => {
+    if (!challengeToDelete || deleting) return
+
+    try {
+      setDeleting(true)
+      const token = localStorage.getItem("authToken")
+
+      const response = await fetch(`${API_URL}/api/admin/challenges/${challengeToDelete.id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || "Erreur lors de la suppression")
+      }
+
+      // Retirer le défi de la liste
       setChallenges(challenges.filter(c => c.id !== challengeToDelete.id))
       setShowDeleteModal(false)
       setChallengeToDelete(null)
+    } catch (err) {
+      console.error("Error deleting challenge:", err)
+      alert(err.message || "Erreur lors de la suppression du défi")
+    } finally {
+      setDeleting(false)
     }
   }
 
-  const toggleStatus = (id) => {
-    setChallenges(challenges.map(c => 
-      c.id === id 
-        ? { ...c, status: c.status === "active" ? "draft" : "active" }
-        : c
-    ))
+  const toggleStatus = async (id) => {
+    try {
+      const token = localStorage.getItem("authToken")
+
+      const response = await fetch(`${API_URL}/api/admin/challenges/${id}/toggle-status`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error("Erreur lors du changement de statut")
+      }
+
+      const data = await response.json()
+      
+      // Mettre à jour le statut localement
+      setChallenges(challenges.map(c => 
+        c.id === id 
+          ? { ...c, is_active: data.is_active }
+          : c
+      ))
+    } catch (err) {
+      console.error("Error toggling status:", err)
+      alert("Erreur lors du changement de statut")
+    }
   }
 
   return (
@@ -317,7 +379,7 @@ const AdminDefis = () => {
                         <button
                           onClick={() => toggleStatus(challenge.id)}
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                            challenge.status === 'active'
+                            challenge.is_active
                               ? theme === 'dark'
                                 ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
                                 : 'bg-green-100 text-green-700 hover:bg-green-200'
@@ -327,27 +389,27 @@ const AdminDefis = () => {
                           }`}
                         >
                           <div className={`w-1.5 h-1.5 rounded-full ${
-                            challenge.status === 'active'
+                            challenge.is_active
                               ? theme === 'dark' ? 'bg-green-400' : 'bg-green-600'
                               : theme === 'dark' ? 'bg-gray-500' : 'bg-gray-500'
                           }`} />
-                          {challenge.status === 'active' ? 'Actif' : 'Brouillon'}
+                          {challenge.is_active ? 'Actif' : 'Brouillon'}
                         </button>
                       </td>
                       <td className={`px-6 py-4 text-sm font-medium ${
                         theme === 'dark' ? 'text-white' : 'text-gray-900'
                       }`}>
-                        {challenge.max_points} pts
+                        {challenge.max_points_per_month} pts
                       </td>
                       <td className={`px-6 py-4 text-sm ${
                         theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                       }`}>
-                        {challenge.participants}
+                        {challenge.participants_count || 0}
                       </td>
                       <td className={`px-6 py-4 text-sm ${
                         theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                       }`}>
-                        {challenge.energy_savings}
+                        {challenge.energy_savings || 'N/A'}
                       </td>
                       <td className={`px-6 py-4 text-sm ${
                         theme === 'dark' ? 'text-gray-400' : 'text-gray-600'

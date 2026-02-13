@@ -1,7 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FiSave, FiX, FiAlertCircle, FiThermometer, FiDroplet, FiZap, FiSun, FiWind } from "react-icons/fi"
 import { useTheme } from "../context/ThemeContext"
 import { useNavigate, useParams } from "react-router-dom"
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const AdminDefiForm = () => {
   const { theme } = useTheme()
@@ -9,39 +11,24 @@ const AdminDefiForm = () => {
   const { id } = useParams() // Pour l'édition
   const isEditing = !!id
 
-  // Mock data pour l'édition
-  const existingChallenge = isEditing ? {
-    slug: "temperature",
-    title: "Défi Température",
-    description: "Maintenez votre logement à 19°C pendant 7 jours consécutifs",
-    explanation: "En réduisant la température de chauffage à 19°C, vous économisez jusqu'à 7% d'énergie par degré en moins.",
-    max_points: 500,
-    energy_savings: "20 kWh/mois",
-    icon: "thermometer",
-    status: "active",
-    challenge_type: "weekly",
-    validation_rules: {
-      target_value: 19,
-      tolerance: 0,
-      min_days: 7
-    }
-  } : null
-
   const [formData, setFormData] = useState({
-    slug: existingChallenge?.slug || "",
-    title: existingChallenge?.title || "",
-    description: existingChallenge?.description || "",
-    explanation: existingChallenge?.explanation || "",
-    max_points: existingChallenge?.max_points || "",
-    energy_savings: existingChallenge?.energy_savings || "",
-    icon: existingChallenge?.icon || "thermometer",
-    status: existingChallenge?.status || "draft",
-    challenge_type: existingChallenge?.challenge_type || "daily",
-    validation_rules: existingChallenge?.validation_rules || {}
+    slug: "",
+    title: "",
+    description: "",
+    explanation: "",
+    max_points_per_month: "",
+    energy_savings: "",
+    icon: "thermometer",
+    is_active: false,
+    target_value: "",
+    target_unit: "",
+    daily_points: 100,
+    weekly_bonus: 500
   })
 
   const [errors, setErrors] = useState({})
-  const [showPreview, setShowPreview] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [loadingChallenge, setLoadingChallenge] = useState(false)
 
   const icons = [
     { value: "thermometer", label: "Thermomètre", icon: <FiThermometer className="w-5 h-5" /> },
@@ -51,18 +38,69 @@ const AdminDefiForm = () => {
     { value: "wind", label: "Vent", icon: <FiWind className="w-5 h-5" /> }
   ]
 
-  const challengeTypes = [
-    { value: "daily", label: "Quotidien - Validation jour par jour" },
-    { value: "weekly", label: "Hebdomadaire - Validation par semaine" },
-    { value: "monthly", label: "Mensuel - Validation par mois" },
-    { value: "continuous", label: "Continu - Suivi permanent" }
-  ]
+  // Charger le défi si on est en mode édition
+  useEffect(() => {
+    if (isEditing) {
+      fetchChallenge()
+    }
+  }, [id])
+
+  const fetchChallenge = async () => {
+    try {
+      setLoadingChallenge(true)
+      const token = localStorage.getItem("authToken")
+
+      if (!token) {
+        navigate("/login")
+        return
+      }
+
+      const response = await fetch(`${API_URL}/api/admin/challenges/${id}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/json"
+        }
+      })
+
+      if (response.status === 401 || response.status === 403) {
+        navigate("/login")
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error("Défi non trouvé")
+      }
+
+      const challenge = await response.json()
+      
+      setFormData({
+        slug: challenge.slug || "",
+        title: challenge.title || "",
+        description: challenge.description || "",
+        explanation: challenge.explanation || "",
+        max_points_per_month: challenge.max_points_per_month || "",
+        energy_savings: challenge.energy_savings || "",
+        icon: challenge.icon || "thermometer",
+        is_active: challenge.is_active || false,
+        target_value: challenge.target_value || "",
+        target_unit: challenge.target_unit || "",
+        daily_points: challenge.daily_points || 100,
+        weekly_bonus: challenge.weekly_bonus || 500
+      })
+    } catch (err) {
+      console.error("Error fetching challenge:", err)
+      alert("Erreur lors du chargement du défi")
+      navigate("/adminspace/defis")
+    } finally {
+      setLoadingChallenge(false)
+    }
+  }
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }))
     // Clear error for this field
     if (errors[name]) {
@@ -82,8 +120,8 @@ const AdminDefiForm = () => {
     if (!formData.title.trim()) newErrors.title = "Le titre est requis"
     if (!formData.description.trim()) newErrors.description = "La description est requise"
     if (!formData.explanation.trim()) newErrors.explanation = "L'explication est requise"
-    if (!formData.max_points || formData.max_points <= 0) {
-      newErrors.max_points = "Les points maximum doivent être supérieurs à 0"
+    if (!formData.max_points_per_month || formData.max_points_per_month <= 0) {
+      newErrors.max_points_per_month = "Les points maximum doivent être supérieurs à 0"
     }
     if (!formData.energy_savings.trim()) newErrors.energy_savings = "Les économies d'énergie sont requises"
 
@@ -91,18 +129,60 @@ const AdminDefiForm = () => {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     if (!validateForm()) {
       return
     }
 
-    // Simuler la sauvegarde
-    console.log("Sauvegarde du défi:", formData)
-    
-    // Rediriger vers la liste
-    navigate("/adminspace/defis")
+    try {
+      setLoading(true)
+      const token = localStorage.getItem("authToken")
+
+      if (!token) {
+        navigate("/login")
+        return
+      }
+
+      const url = isEditing 
+        ? `${API_URL}/api/admin/challenges/${id}`
+        : `${API_URL}/api/admin/challenges/`
+
+      const method = isEditing ? "PUT" : "POST"
+
+      // Préparer les données (convertir les strings vides en null pour les champs optionnels)
+      const payload = {
+        ...formData,
+        max_points_per_month: parseInt(formData.max_points_per_month),
+        daily_points: parseInt(formData.daily_points),
+        weekly_bonus: parseInt(formData.weekly_bonus),
+        target_value: formData.target_value ? parseFloat(formData.target_value) : null,
+        target_unit: formData.target_unit || null
+      }
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || "Erreur lors de la sauvegarde")
+      }
+
+      // Rediriger vers la liste
+      navigate("/adminspace/defis")
+    } catch (err) {
+      console.error("Error saving challenge:", err)
+      alert(err.message || "Erreur lors de la sauvegarde du défi")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleCancel = () => {
@@ -110,6 +190,23 @@ const AdminDefiForm = () => {
   }
 
   const selectedIcon = icons.find(i => i.value === formData.icon)
+
+  if (loadingChallenge) {
+    return (
+      <div className={`min-h-screen p-6 flex items-center justify-center ${
+        theme === 'dark' ? 'bg-gray-950' : 'bg-gray-50'
+      }`}>
+        <div className="text-center">
+          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto ${
+            theme === 'dark' ? 'border-white' : 'border-gray-900'
+          }`}></div>
+          <p className={`mt-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            Chargement du défi...
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-200 ${
@@ -163,13 +260,14 @@ const AdminDefiForm = () => {
                   value={formData.slug}
                   onChange={handleChange}
                   placeholder="ex: temperature, chrono-douche"
+                  disabled={isEditing}
                   className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
                     errors.slug
                       ? 'border-red-500 focus:border-red-500'
                       : theme === 'dark'
                         ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500'
                         : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500'
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                  } ${isEditing ? 'opacity-50 cursor-not-allowed' : ''} focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
                 />
                 {errors.slug && (
                   <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
@@ -177,9 +275,16 @@ const AdminDefiForm = () => {
                     {errors.slug}
                   </p>
                 )}
-                <p className={`mt-1.5 text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                  Utilisé dans les URLs. Lettres minuscules, chiffres et tirets uniquement.
-                </p>
+                {!isEditing && (
+                  <p className={`mt-1.5 text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Utilisé dans les URLs. Lettres minuscules, chiffres et tirets uniquement.
+                  </p>
+                )}
+                {isEditing && (
+                  <p className={`mt-1.5 text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Le slug ne peut pas être modifié après la création.
+                  </p>
+                )}
               </div>
 
               {/* Titre */}
@@ -211,7 +316,7 @@ const AdminDefiForm = () => {
                 )}
               </div>
 
-              {/* Description courte */}
+              {/* Description */}
               <div>
                 <label className={`block text-sm font-medium mb-2 ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -223,7 +328,7 @@ const AdminDefiForm = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows="2"
-                  placeholder="Une description concise du défi (1-2 lignes)"
+                  placeholder="ex: Maintenez votre logement à 19°C pendant 7 jours consécutifs"
                   className={`w-full px-4 py-2.5 rounded-lg border transition-colors resize-none ${
                     errors.description
                       ? 'border-red-500 focus:border-red-500'
@@ -240,7 +345,7 @@ const AdminDefiForm = () => {
                 )}
               </div>
 
-              {/* Explication détaillée */}
+              {/* Explication */}
               <div>
                 <label className={`block text-sm font-medium mb-2 ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -252,7 +357,7 @@ const AdminDefiForm = () => {
                   value={formData.explanation}
                   onChange={handleChange}
                   rows="3"
-                  placeholder="Expliquez pourquoi ce défi est important et comment il aide à économiser l'énergie"
+                  placeholder="ex: En réduisant la température de chauffage à 19°C..."
                   className={`w-full px-4 py-2.5 rounded-lg border transition-colors resize-none ${
                     errors.explanation
                       ? 'border-red-500 focus:border-red-500'
@@ -269,7 +374,6 @@ const AdminDefiForm = () => {
                 )}
               </div>
 
-              {/* Grid pour les champs courts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Icône */}
                 <div>
@@ -313,21 +417,22 @@ const AdminDefiForm = () => {
                   }`}>
                     Statut *
                   </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-                      theme === 'dark'
-                        ? 'bg-gray-800 border-gray-700 text-white'
-                        : 'bg-gray-50 border-gray-200 text-gray-900'
-                    } focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500`}
-                  >
-                    <option value="draft">Brouillon</option>
-                    <option value="active">Actif</option>
-                  </select>
+                  <div className="flex items-center gap-3 h-11">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="is_active"
+                        checked={formData.is_active}
+                        onChange={handleChange}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Actif (visible par les utilisateurs)
+                      </span>
+                    </label>
+                  </div>
                   <p className={`mt-1.5 text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Les défis en brouillon ne sont pas visibles par les utilisateurs
+                    Les défis inactifs ne sont pas visibles par les utilisateurs
                   </p>
                 </div>
               </div>
@@ -343,31 +448,6 @@ const AdminDefiForm = () => {
             </h2>
 
             <div className="space-y-4">
-              {/* Type de défi */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Type de défi *
-                </label>
-                <select
-                  name="challenge_type"
-                  value={formData.challenge_type}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-                    theme === 'dark'
-                      ? 'bg-gray-800 border-gray-700 text-white'
-                      : 'bg-gray-50 border-gray-200 text-gray-900'
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500`}
-                >
-                  {challengeTypes.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Points maximum */}
                 <div>
@@ -378,24 +458,24 @@ const AdminDefiForm = () => {
                   </label>
                   <input
                     type="number"
-                    name="max_points"
-                    value={formData.max_points}
+                    name="max_points_per_month"
+                    value={formData.max_points_per_month}
                     onChange={handleChange}
                     min="0"
                     step="10"
                     placeholder="ex: 500"
                     className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-                      errors.max_points
+                      errors.max_points_per_month
                         ? 'border-red-500 focus:border-red-500'
                         : theme === 'dark'
                           ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500'
                           : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500'
                     } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
                   />
-                  {errors.max_points && (
+                  {errors.max_points_per_month && (
                     <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
                       <FiAlertCircle className="w-3 h-3" />
-                      {errors.max_points}
+                      {errors.max_points_per_month}
                     </p>
                   )}
                 </div>
@@ -428,32 +508,82 @@ const AdminDefiForm = () => {
                     </p>
                   )}
                 </div>
+
+                {/* Points quotidiens */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Points par validation quotidienne
+                  </label>
+                  <input
+                    type="number"
+                    name="daily_points"
+                    value={formData.daily_points}
+                    onChange={handleChange}
+                    min="0"
+                    step="10"
+                    placeholder="ex: 100"
+                    className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
+                      theme === 'dark'
+                        ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500'
+                        : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                  />
+                </div>
+
+                {/* Bonus hebdomadaire */}
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Bonus pour 7 jours consécutifs
+                  </label>
+                  <input
+                    type="number"
+                    name="weekly_bonus"
+                    value={formData.weekly_bonus}
+                    onChange={handleChange}
+                    min="0"
+                    step="50"
+                    placeholder="ex: 500"
+                    className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
+                      theme === 'dark'
+                        ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500'
+                        : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-        
           {/* Actions */}
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
+              disabled={loading}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-all duration-150 ${
                 theme === 'dark'
                   ? 'bg-blue-600 hover:bg-blue-700 text-white'
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
+              } ${loading ? 'opacity-50 cursor-wait' : ''}`}
             >
               <FiSave className="w-4 h-4" />
-              {isEditing ? 'Enregistrer les modifications' : 'Créer le défi'}
+              {loading 
+                ? 'Enregistrement...' 
+                : isEditing ? 'Enregistrer les modifications' : 'Créer le défi'
+              }
             </button>
             <button
               type="button"
               onClick={handleCancel}
+              disabled={loading}
               className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-150 ${
                 theme === 'dark'
                   ? 'bg-gray-800 hover:bg-gray-750 text-gray-300'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
+              } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Annuler
             </button>

@@ -16,17 +16,9 @@ const ProfileDropdown = ({ isOpen, onClose, user = { name: "Admin" } }) => {
       icon: FiUser,
       label: "Mon profil",
       onClick: () => navigate(isAdmin ? "/adminspace/profile" : "/profile"),
-    },
-    { 
-      icon: FiSettings, 
-      label: "Paramètres", 
-      onClick: () => navigate(isAdmin ? "/adminspace/settings" : "/settings")
-    },
-    { 
-      icon: FiHelpCircle, 
-      label: "Aide & Support", 
-      onClick: () => console.log("Aide cliqué") 
-    },
+    }
+    
+   
   ]
 
   const handleMenuItemClick = (onClick) => {

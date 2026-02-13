@@ -10,10 +10,11 @@ const PostCard = ({
   onAddComment, 
   onEditPost, 
   onDeletePost,
+  onLikePost,
   currentUserId = "Vous",
   theme = 'light'
 }) => {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.user_liked === 1);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -38,9 +39,20 @@ const PostCard = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikes(liked ? likes - 1 : likes + 1);
+  // const handleLike = () => {
+  //   setLiked(!liked);
+  //   setLikes(liked ? likes - 1 : likes + 1);
+  // };
+
+   const handleLike = () => {
+    const newLikedState = !liked;
+    setLiked(newLikedState);
+    setLikes(newLikedState ? likes + 1 : likes - 1);
+    
+    // Appeler l'API
+    if (onLikePost) {
+      onLikePost(post.id);
+    }
   };
 
   const handleAddComment = () => {

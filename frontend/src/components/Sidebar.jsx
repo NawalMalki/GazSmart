@@ -49,7 +49,6 @@ const Sidebar = ({ isOpen, isAdmin = false }) => {
         { icon: <FiUsers />, label: "Classement", path: "/classement" },
         { icon: <FiMessageSquare />, label: "Fil d'actualité", path: "/feed" },
         { icon: <FiCalendar />, label: "Événements", path: "/events" },
-        { icon: <FiAward />, label: "Récompenses", path: "/recompenses" },
       ],
     },
   ]

@@ -29,6 +29,8 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
     "/feed": "Fil d'actualité",
     "/events": "Événements",
     "/profile": "Profil",
+    "/adminspace/feed": "Modération du feed",
+    "/adminspace/evenements": "Gestion des événements",
   }
 
   const getCurrentPageName = () => pageNames[location.pathname] || "Tableau de bord"

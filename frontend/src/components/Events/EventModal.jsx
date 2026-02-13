@@ -59,12 +59,15 @@ const EventModal = ({ event, onClose, onAttendToggle }) => {
             {event.description}
           </p>
 
-          <div className={`mt-4 flex items-center gap-2 text-xs ${
-            theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
-          }`}>
-            <FiUsers className="w-3.5 h-3.5" />
-            <span>{event.participants}</span>
-          </div>
+          {/* Participants optionnel
+          {event.participants && (
+            <div className={`mt-4 flex items-center gap-2 text-xs ${
+              theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+            }`}>
+              <FiUsers className="w-3.5 h-3.5" />
+              <span>{event.participants}</span>
+            </div>
+          )} */}
 
           {/* Actions */}
           <div className="flex gap-3 mt-6">
