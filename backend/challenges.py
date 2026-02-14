@@ -88,24 +88,165 @@ def get_user_from_token(authorization: Optional[str]):
     return user
 
 # ==================== ENDPOINTS ====================
+# ATTENTION: L'ORDRE DES ROUTES EST CRUCIAL !
+# Les routes les PLUS SPÉCIFIQUES doivent être en PREMIER
+# Les routes avec paramètres ({challenge_slug}) doivent être en DERNIER
 
-@router.get("/", response_model=List[ChallengeResponse])
-def get_all_challenges():
-    """Récupérer tous les défis disponibles"""
+# ========== 1. ROUTES LES PLUS SPÉCIFIQUES ==========
+@router.get("/leaderboard/full")
+def get_full_leaderboard(
+    period: str = "all",  # all, week, month
+    authorization: Optional[str] = Header(None)
+):
+    """Récupérer le classement complet avec évolution"""
+    try:
+        print(f" Appel à /leaderboard/full avec period={period}")
+        
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # Récupérer tous les utilisateurs avec leurs points
+            cursor.execute("""
+                SELECT 
+                    u.id,
+                    u.full_name as name,
+                    u.email,
+                    u.profile_picture,
+                    COALESCE(u.total_points, 0) as points,
+                    (SELECT COUNT(*) FROM challenge_participations cp 
+                     WHERE cp.user_id = u.id AND cp.is_active = TRUE) as active_challenges
+                FROM users u
+                WHERE u.total_points > 0 OR u.id IN (
+                    SELECT user_id FROM challenge_participations
+                )
+                ORDER BY u.total_points DESC
+            """)
+            
+            users = cursor.fetchall()
+            print(f" {len(users)} utilisateurs trouvés")
+            
+            # Définir la période de calcul
+            today = date.today()
+            yesterday = today - timedelta(days=1)
+            
+            if period == "week":
+                start_date = today - timedelta(days=7)
+                previous_start = start_date - timedelta(days=7)  # Semaine précédente
+            elif period == "month":
+                start_date = today - timedelta(days=30)
+                previous_start = start_date - timedelta(days=30)  # Mois précédent
+            else:  # "all"
+                # Pour "all", on compare avec le mois dernier
+                start_date = today - timedelta(days=30)
+                previous_start = start_date - timedelta(days=30)
+            
+            leaderboard = []
+            for idx, user in enumerate(users):
+                # Déterminer la couleur de l'avatar
+                colors = [
+                    'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
+                    'bg-purple-500', 'bg-pink-500', 'bg-indigo-500',
+                    'bg-red-500', 'bg-teal-500', 'bg-orange-500'
+                ]
+                avatar_color = colors[idx % len(colors)]
+                
+                # Calculer les points gagnés pendant la période actuelle
+                cursor.execute("""
+                    SELECT COALESCE(SUM(points_earned), 0) as points_this_period
+                    FROM challenge_daily_logs cdl
+                    JOIN challenge_participations cp ON cdl.participation_id = cp.id
+                    WHERE cp.user_id = %s AND cdl.created_at >= %s
+                """, (user["id"], start_date))
+                result = cursor.fetchone()
+                points_this_period = result["points_this_period"] if result else 0
+                
+                # Calculer les points gagnés pendant la période précédente (pour comparaison)
+                cursor.execute("""
+                    SELECT COALESCE(SUM(points_earned), 0) as points_previous_period
+                    FROM challenge_daily_logs cdl
+                    JOIN challenge_participations cp ON cdl.participation_id = cp.id
+                    WHERE cp.user_id = %s AND cdl.created_at >= %s AND cdl.created_at < %s
+                """, (user["id"], previous_start, start_date))
+                result = cursor.fetchone()
+                points_previous_period = result["points_previous_period"] if result else 0
+                
+                # Calculer l'évolution (différence entre les deux périodes)
+                if points_previous_period > 0:
+                    evolution = points_this_period - points_previous_period
+                else:
+                    # Si pas de données précédentes, utiliser les points de la période
+                    evolution = points_this_period
+                
+                # Déterminer la tendance et le changement
+                if evolution > 0:
+                    trend = "up"
+                    change = f"+{evolution}"
+                elif evolution < 0:
+                    trend = "down"
+                    change = f"{evolution}"  # Déjà négatif
+                else:
+                    # Pas de changement
+                    if points_this_period > 0:
+                        trend = "up"
+                        change = f"+{points_this_period}"
+                    else:
+                        trend = "down"
+                        change = "0"
+                
+                # Pour l'affichage, on veut un nombre positif ou négatif
+                # Mais "votre progression" doit être lisible
+                if evolution > 0:
+                    display_change = f"+{evolution}"
+                elif evolution < 0:
+                    display_change = f"{evolution}"  # Ex: "-45"
+                else:
+                    display_change = "0"
+                
+                leaderboard.append({
+                    "id": user["id"],
+                    "name": user["name"],
+                    "email": user["email"],
+                    "avatarColor": avatar_color,
+                    "points": user["points"],
+                    "trend": "up" if evolution >= 0 else "down",
+                    "change": display_change,
+                    "active_challenges": user["active_challenges"],
+                    # Ajouter ces champs pour debug si besoin
+                    "debug": {
+                        "points_this_period": points_this_period,
+                        "points_previous_period": points_previous_period,
+                        "evolution": evolution
+                    }
+                })
+            
+        connection.close()
+        
+        print(f" Classement généré avec {len(leaderboard)} participants")
+        return {"leaderboard": leaderboard}
+        
+    except Exception as e:
+        print(f" Erreur leaderboard: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+@router.get("/leaderboard")
+def get_leaderboard(limit: int = 10):
+    """Récupérer le classement des utilisateurs (version simplifiée)"""
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT id, slug, title, description, explanation, icon, 
-                       max_points_per_month, energy_savings, target_value, 
-                       target_unit, daily_points, weekly_bonus, is_active
-                FROM challenges
-                WHERE is_active = TRUE
-                ORDER BY id
-            """)
-            challenges = cursor.fetchall()
+                SELECT u.id, u.full_name, u.profile_picture, u.total_points,
+                       (SELECT COUNT(*) FROM challenge_participations cp 
+                        WHERE cp.user_id = u.id AND cp.is_active = TRUE) as active_challenges
+                FROM users u
+                WHERE u.total_points > 0
+                ORDER BY u.total_points DESC
+                LIMIT %s
+            """, (limit,))
+            leaderboard = cursor.fetchall()
         connection.close()
-        return challenges
+        
+        return {"leaderboard": leaderboard}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
 
@@ -132,53 +273,60 @@ def get_my_participations(authorization: Optional[str] = Header(None)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
 
-@router.post("/join/{challenge_slug}")
-def join_challenge(challenge_slug: str, authorization: Optional[str] = Header(None)):
-    """Rejoindre un défi"""
+@router.get("/stats")
+def get_user_challenge_stats(authorization: Optional[str] = Header(None)):
+    """Récupérer les statistiques globales de l'utilisateur pour les défis"""
     user = get_user_from_token(authorization)
     
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # Vérifier que le défi existe
-            cursor.execute("SELECT id FROM challenges WHERE slug = %s AND is_active = TRUE", (challenge_slug,))
-            challenge = cursor.fetchone()
+            # Total points
+            cursor.execute("SELECT total_points FROM users WHERE id = %s", (user["id"],))
+            user_data = cursor.fetchone()
+            total_points = user_data["total_points"] if user_data else 0
             
-            if not challenge:
-                raise HTTPException(status_code=404, detail="Défi non trouvé")
-            
-            # Vérifier si déjà participant
+            # Défis actifs
             cursor.execute("""
-                SELECT id FROM challenge_participations 
-                WHERE user_id = %s AND challenge_id = %s
-            """, (user["id"], challenge["id"]))
+                SELECT COUNT(*) as count FROM challenge_participations 
+                WHERE user_id = %s AND is_active = TRUE
+            """, (user["id"],))
+            active = cursor.fetchone()
             
-            existing = cursor.fetchone()
-            if existing:
-                # Réactiver si inactif
+            # Badges (table peut ne pas exister)
+            badges = []
+            try:
                 cursor.execute("""
-                    UPDATE challenge_participations 
-                    SET is_active = TRUE 
-                    WHERE id = %s
-                """, (existing["id"],))
-                connection.commit()
-                connection.close()
-                return {"message": "Participation réactivée", "participation_id": existing["id"]}
+                    SELECT badge_type FROM user_badges WHERE user_id = %s
+                """, (user["id"],))
+                badges = [b["badge_type"] for b in cursor.fetchall()]
+            except:
+                pass
             
-            # Créer nouvelle participation
+            # Jours d'observation restants (90 jours depuis le premier défi)
             cursor.execute("""
-                INSERT INTO challenge_participations (user_id, challenge_id)
-                VALUES (%s, %s)
-            """, (user["id"], challenge["id"]))
-            connection.commit()
-            participation_id = cursor.lastrowid
+                SELECT MIN(started_at) as first_challenge 
+                FROM challenge_participations WHERE user_id = %s
+            """, (user["id"],))
+            first = cursor.fetchone()
+            
+            observation_days = 90
+            if first and first["first_challenge"]:
+                days_since = (datetime.now() - first["first_challenge"]).days
+                observation_days = max(0, 90 - days_since)
+            
         connection.close()
         
-        return {"message": "Vous avez rejoint le défi!", "participation_id": participation_id}
-    except HTTPException:
-        raise
+        return {
+            "total_points": total_points,
+            "active_challenges": active["count"],
+            "badges": badges,
+            "observation_days_remaining": observation_days
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
+# ========== 2. ROUTES AVEC PARAMÈTRES (challenge_slug) ==========
 
 @router.get("/participation/{challenge_slug}")
 def get_participation_details(challenge_slug: str, authorization: Optional[str] = Header(None)):
@@ -230,6 +378,54 @@ def get_participation_details(challenge_slug: str, authorization: Optional[str] 
             "weekly_logs": weekly_logs,
             "is_participating": participation is not None and participation["is_active"]
         }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
+@router.post("/join/{challenge_slug}")
+def join_challenge(challenge_slug: str, authorization: Optional[str] = Header(None)):
+    """Rejoindre un défi"""
+    user = get_user_from_token(authorization)
+    
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # Vérifier que le défi existe
+            cursor.execute("SELECT id FROM challenges WHERE slug = %s AND is_active = TRUE", (challenge_slug,))
+            challenge = cursor.fetchone()
+            
+            if not challenge:
+                raise HTTPException(status_code=404, detail="Défi non trouvé")
+            
+            # Vérifier si déjà participant
+            cursor.execute("""
+                SELECT id FROM challenge_participations 
+                WHERE user_id = %s AND challenge_id = %s
+            """, (user["id"], challenge["id"]))
+            
+            existing = cursor.fetchone()
+            if existing:
+                # Réactiver si inactif
+                cursor.execute("""
+                    UPDATE challenge_participations 
+                    SET is_active = TRUE 
+                    WHERE id = %s
+                """, (existing["id"],))
+                connection.commit()
+                connection.close()
+                return {"message": "Participation réactivée", "participation_id": existing["id"]}
+            
+            # Créer nouvelle participation
+            cursor.execute("""
+                INSERT INTO challenge_participations (user_id, challenge_id)
+                VALUES (%s, %s)
+            """, (user["id"], challenge["id"]))
+            connection.commit()
+            participation_id = cursor.lastrowid
+        connection.close()
+        
+        return {"message": "Vous avez rejoint le défi!", "participation_id": participation_id}
     except HTTPException:
         raise
     except Exception as e:
@@ -383,10 +579,12 @@ def validate_shower(challenge_slug: str, shower_duration_seconds: int, authoriza
                 participation_id = cursor.lastrowid
                 current_streak = 0
                 best_streak = 0
+                total_days = 0
             else:
                 participation_id = participation["id"]
                 current_streak = participation["current_streak"]
                 best_streak = participation["best_streak"]
+                total_days = participation["total_days_validated"]
             
             # Vérifier si déjà validé aujourd'hui
             cursor.execute("""
@@ -415,7 +613,7 @@ def validate_shower(challenge_slug: str, shower_duration_seconds: int, authoriza
             new_best_streak = max(best_streak, new_streak)
             
             # Bonus si 10 douches validées
-            total_showers = (participation["total_days_validated"] if participation else 0) + 1
+            total_showers = total_days + 1
             bonus = challenge["weekly_bonus"] if total_showers % 10 == 0 else 0
             total_points_earned = points_earned + bonus
             
@@ -581,77 +779,24 @@ def validate_cuisine(challenge_slug: str, request: CuisineValidateRequest, autho
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
 
-@router.get("/stats")
-def get_user_challenge_stats(authorization: Optional[str] = Header(None)):
-    """Récupérer les statistiques globales de l'utilisateur pour les défis"""
-    user = get_user_from_token(authorization)
-    
-    try:
-        connection = get_db_connection()
-        with connection.cursor() as cursor:
-            # Total points
-            cursor.execute("SELECT total_points FROM users WHERE id = %s", (user["id"],))
-            user_data = cursor.fetchone()
-            total_points = user_data["total_points"] if user_data else 0
-            
-            # Défis actifs
-            cursor.execute("""
-                SELECT COUNT(*) as count FROM challenge_participations 
-                WHERE user_id = %s AND is_active = TRUE
-            """, (user["id"],))
-            active = cursor.fetchone()
-            
-            # Badges (table peut ne pas exister)
-            badges = []
-            try:
-                cursor.execute("""
-                    SELECT badge_type FROM user_badges WHERE user_id = %s
-                """, (user["id"],))
-                badges = [b["badge_type"] for b in cursor.fetchall()]
-            except:
-                pass
-            
-            # Jours d'observation restants (90 jours depuis le premier défi)
-            cursor.execute("""
-                SELECT MIN(started_at) as first_challenge 
-                FROM challenge_participations WHERE user_id = %s
-            """, (user["id"],))
-            first = cursor.fetchone()
-            
-            observation_days = 90
-            if first and first["first_challenge"]:
-                days_since = (datetime.now() - first["first_challenge"]).days
-                observation_days = max(0, 90 - days_since)
-            
-        connection.close()
-        
-        return {
-            "total_points": total_points,
-            "active_challenges": active["count"],
-            "badges": badges,
-            "observation_days_remaining": observation_days
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+# ========== 3. ROUTE GÉNÉRIQUE (À METTRE EN DERNIER) ==========
 
-@router.get("/leaderboard")
-def get_leaderboard(limit: int = 10):
-    """Récupérer le classement des utilisateurs"""
+@router.get("/", response_model=List[ChallengeResponse])
+def get_all_challenges():
+    """Récupérer tous les défis disponibles"""
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT u.id, u.full_name, u.profile_picture, u.total_points,
-                       (SELECT COUNT(*) FROM challenge_participations cp 
-                        WHERE cp.user_id = u.id AND cp.is_active = TRUE) as active_challenges
-                FROM users u
-                WHERE u.total_points > 0
-                ORDER BY u.total_points DESC
-                LIMIT %s
-            """, (limit,))
-            leaderboard = cursor.fetchall()
+                SELECT id, slug, title, description, explanation, icon, 
+                       max_points_per_month, energy_savings, target_value, 
+                       target_unit, daily_points, weekly_bonus, is_active
+                FROM challenges
+                WHERE is_active = TRUE
+                ORDER BY id
+            """)
+            challenges = cursor.fetchall()
         connection.close()
-        
-        return {"leaderboard": leaderboard}
+        return challenges
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")

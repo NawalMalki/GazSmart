@@ -351,11 +351,16 @@ def resend_verification(request: LoginRequest):
     return {"message": "Verification email sent successfully"}
 
 
-app.include_router(challenges_router)  # ← AJOUT MANQUANT
-app.include_router(challenges_admin_router)  # ← NOUVEAU ROUTER ADMIN
-app.include_router(events_router)
-app.include_router(posts_router)
-app.include_router(admin_posts_router)
+# D'ABORD les routes principales
+app.include_router(posts_router)           # /api/posts
+app.include_router(events_router)           # /api/events
+
+# ENSUITE les routes avec des chemins spécifiques
+app.include_router(challenges_router)       # /api/challenges
+
+# ENFIN les routes admin (plus spécifiques)
+app.include_router(challenges_admin_router) # /api/admin/challenges
+app.include_router(admin_posts_router)      # /api/admin/posts
 
 if __name__ == "__main__":
     import uvicorn

@@ -5,6 +5,8 @@ import {
 } from 'react-icons/fi';
 import ConfirmationModal from './ConfirmationModal';
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 const PostCard = ({ 
   post, 
   onAddComment, 
@@ -55,31 +57,129 @@ const PostCard = ({
     }
   };
 
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    const comment = { id: comments.length + 1, user: currentUserId, avatar: "https://i.pravatar.cc/40?img=5", text: newComment, time: "À l'instant" };
-    setComments([...comments, comment]);
-    onAddComment?.(post.id, comment);
+  // const handleAddComment = () => {
+  //   if (!newComment.trim()) return;
+  //   const comment = { id: comments.length + 1, user: currentUserId, avatar: "https://i.pravatar.cc/40?img=5", text: newComment, time: "À l'instant" };
+  //   setComments([...comments, comment]);
+  //   onAddComment?.(post.id, comment);
+  //   setNewComment('');
+  // };
+
+  const handleAddComment = async () => {
+  if (!newComment.trim()) return;
+  
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      alert("Veuillez vous connecter");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('content', newComment.trim());
+
+    const response = await fetch(`${API_URL}/api/posts/${post.id}/comments`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error("Erreur lors de l'ajout du commentaire");
+    }
+
+    const newCommentData = await response.json();
+    
+    // Mettre à jour l'état local avec le commentaire retourné par l'API
+    setComments([...comments, newCommentData]);
+    
+    // Appeler onAddComment si nécessaire
+    if (onAddComment) {
+      onAddComment(post.id, newCommentData);
+    }
+    
     setNewComment('');
-  };
+  } catch (error) {
+    console.error("Erreur:", error);
+    alert("Impossible d'ajouter le commentaire");
+  }
+};
 
   const handleEditComment = (commentId) => {
     const comment = comments.find(c => c.id === commentId);
     if (comment) { setIsEditingComment(commentId); setEditCommentText(comment.text); }
   };
 
-  const handleSaveCommentEdit = (commentId) => {
-    if (!editCommentText.trim()) return;
-    setComments(comments.map(c => c.id === commentId ? { ...c, text: editCommentText, edited: true } : c));
+  const handleSaveCommentEdit = async (commentId) => {
+  if (!editCommentText.trim()) return;
+  
+  try {
+    const token = localStorage.getItem("authToken");
+    const formData = new FormData();
+    formData.append('content', editCommentText.trim());
+
+    const response = await fetch(`${API_URL}/api/posts/comments/${commentId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Erreur lors de la modification");
+
+    const result = await response.json();
+    
+    setComments(comments.map(c => 
+      c.id === commentId 
+        ? { ...c, text: editCommentText, edited: true }
+        : c
+    ));
+    
     setIsEditingComment(null);
     setEditCommentText('');
-  };
+  } catch (error) {
+    console.error("Erreur:", error);
+    alert("Impossible de modifier le commentaire");
+  }
+};
 
-  const handleDeleteComment = (commentId) => {
+const handleDeleteComment = async (commentId) => {
+  try {
+    const token = localStorage.getItem("authToken");
+
+    const response = await fetch(`${API_URL}/api/posts/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) throw new Error("Erreur lors de la suppression");
+
     setComments(comments.filter(c => c.id !== commentId));
     setShowCommentDeleteModal(false);
     setCommentToDelete(null);
-  };
+  } catch (error) {
+    console.error("Erreur:", error);
+    alert("Impossible de supprimer le commentaire");
+  }
+};
+
+  // const handleSaveCommentEdit = (commentId) => {
+  //   if (!editCommentText.trim()) return;
+  //   setComments(comments.map(c => c.id === commentId ? { ...c, text: editCommentText, edited: true } : c));
+  //   setIsEditingComment(null);
+  //   setEditCommentText('');
+  // };
+
+  // const handleDeleteComment = (commentId) => {
+  //   setComments(comments.filter(c => c.id !== commentId));
+  //   setShowCommentDeleteModal(false);
+  //   setCommentToDelete(null);
+  // };
 
   const confirmDeleteComment = (commentId) => {
     setCommentToDelete(commentId);
